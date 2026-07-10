@@ -1,0 +1,12 @@
+{
+  "retrieved_at": "2026-07-09T12:00:00Z",
+  "keywords": [
+    {"term": "car dealership niagara falls", "volume": 2400, "difficulty": 52, "cpc_usd": 3.20},
+    {"term": "used cars niagara falls ontario", "volume": 1900, "difficulty": 44, "cpc_usd": 2.75},
+    {"term": "auto service niagara falls", "volume": 1100, "difficulty": 38, "cpc_usd": 4.10}
+  ],
+  "competitors": [
+    {"name": "Niagara Auto Sales", "domain": "niagaraautosales.example.com", "domain_authority": 34},
+    {"name": "Queenston Chevrolet", "domain": "queenstonchevy.example.com", "domain_authority": 41}
+  ]
+}

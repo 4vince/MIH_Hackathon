@@ -1,0 +1,24 @@
+{
+  "business_name": "Basil Ford of Niagara Falls",
+  "location": "Niagara Falls, ON",
+  "industry": "Automotive — Sales & Service",
+  "customer_segments": [
+    {
+      "segment": "Local commuters",
+      "size_estimate": "large",
+      "pain_points": ["trade-in value transparency", "service wait times"]
+    },
+    {
+      "segment": "Tourists / seasonal visitors",
+      "size_estimate": "moderate",
+      "pain_points": ["rental vs purchase confusion", "short-term financing"]
+    }
+  ],
+  "current_marketing_channels": ["Google Ads", "Facebook", "Dealership website", "Direct mail"],
+  "revenue_breakdown": {
+    "new_vehicle_sales": 0.45,
+    "used_vehicle_sales": 0.30,
+    "service_parts": 0.20,
+    "financing_insurance": 0.05
+  }
+}
