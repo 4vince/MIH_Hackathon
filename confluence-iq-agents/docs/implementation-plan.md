@@ -12,6 +12,18 @@ The project skeleton exists (structure, scraped data, LangGraph graph wiring, Py
    - Opportunity prioritization (what to create first)
 4. **No hallucinations** — grounded only in provided data files
 
+## Methodology
+
+Three documented patterns from Anthropic's **"Building Effective Agents"** (Dec 2024):
+
+1. **Parallelization (sectioning)** — Agent 1 (Data Synthesizer) and Agent 2 (Competitor Analyst) read independent, non-overlapping data sources and run concurrently. Neither needs the other's output. This is not an optimisation; it's a correctness property — they are genuinely independent analyses.
+
+2. **Prompt chaining** — Agent 3 (Content Strategist) consumes both prior outputs as a serial next step. This is the "aggregation" half of the pattern. Each agent's output is a complete, validated structure before the next begins.
+
+3. **Rule-based verification** — A deterministic check (schema compliance, field presence, length thresholds) before the report is considered final. This is **not** a second LLM pass grading the first — it's a hard check at the graph level.
+
+These are not ad hoc shortcuts — they are documented practices for well-defined multi-step tasks. The architecture should name them explicitly.
+
 ---
 
 ## Files to modify (in order)
@@ -27,12 +39,12 @@ The project skeleton exists (structure, scraped data, LangGraph graph wiring, Py
 | 7 | `src/confluence_iq/agents/data_synthesizer.py` | Real LLM call: load prompt + data → call structured LLM → validate → return |
 | 8 | `src/confluence_iq/agents/competitor_analyst.py` | Same pattern, loads SEO trends + site texts |
 | 9 | `src/confluence_iq/agents/content_strategist.py` | Same pattern, takes Agent1 + Agent2 outputs as context |
-| 10 | `src/confluence_iq/graph.py` | Add logging/print statements so agent passing is visible at runtime |
+| 10 | `src/confluence_iq/graph.py` | Add logging + rule-based verification node + conditional edge |
 | 11 | `src/confluence_iq/report/markdown_report.py` | Update to render new schema fields (gaps, questions, priorities) |
 | 12 | `tests/test_data_synthesizer.py` | Update assertions — test schema validity, not hardcoded values |
 | 13 | `tests/test_competitor_analyst.py` | Same |
 | 14 | `tests/test_content_strategist.py` | Same |
-| 15 | `docs/architecture.md` | Minor update if graph changes (e.g. logging additions) |
+| 15 | `docs/architecture.md` | Update to name the three Anthropic patterns and show verification step |
 
 ---
 
@@ -173,31 +185,81 @@ class DataSynthesizerAgent:
 
 The `competitor_analyst.py` additionally loads site texts via `load_site_texts()` and the agent 3 receives `agent1_output` and `agent2_output` from state.
 
-### Step 6: Visible agent communication in graph
+### Step 6: Visible agent communication + rule-based verification in graph
 **File:** `graph.py`
 
-Wrap each node call with stdout logging that makes agent passing visible:
+**Visible communication** — stdout logging that makes agent passing visible:
 
 ```
-→ Agent 1 (Data Synthesizer) started...
-  [Agent 1 output printed here]
-  → Agent 1 complete. Passing customer insights to Agent 3.
+═╡ Starting Agent 1 — Data Synthesizer ╞══════════════════════════
+  [Agent 1 prints findings]
+  ✓ Agent 1 complete. Passing customer insights to Agent 3.
 
-→ Agent 2 (Competitor Analyst) started...
-  [Agent 2 output printed here]
-  → Agent 2 complete. Passing competitive analysis to Agent 3.
+═╡ Starting Agent 2 — Competitor Analyst ╞════════════════════════
+  [Agent 2 prints findings]
+  ✓ Agent 2 complete. Passing competitive analysis to Agent 3.
 
-→ Agent 3 (Content Strategist) started...
-  Reads Agent 1's findings: [summary]
-  Reads Agent 2's findings: [summary]
+═╡ Starting Agent 3 — Content Strategist ╞════════════════════════
+  Reading Agent 1's customer insights...
+  Reading Agent 2's competitive analysis...
   Comparing customer needs vs. existing site content...
-  [Agent 3 output printed here]
-  → Agent 3 complete. Writing report...
+  [Agent 3 prints findings]
+  ✓ Agent 3 complete.
+
+═╡ Rule-based verification ╞══════════════════════════════════════
+  → Checking Agent 1 output schema... ✓
+  → Checking Agent 2 output schema... ✓
+  → Checking Agent 3 has unanswered_buyer_questions... ✓
+  → Checking Agent 3 has content_gaps... ✓
+  → Checking Agent 3 has opportunity_prioritization... ✓
+  → Report content length: 2847 chars ✓
+  ✓ All checks passed.
 
 ✓ Report written to output/report_20260710_143022.md
 ```
 
-The agents themselves print their reasoning (step 5). The graph prints the orchestration flow. Together they satisfy the "visibly show agents talking" criterion.
+**Rule-based verification** — add a `verify` node and a conditional edge:
+
+```python
+def verify_outputs(state: AgentState) -> str:
+    """Deterministic checks — no LLM involved."""
+    errors = []
+
+    a1 = state.get("agent1_output")
+    a2 = state.get("agent2_output")
+    a3 = state.get("agent3_output")
+
+    if not a1: errors.append("Missing Agent 1 output")
+    elif not a1.get("customer_segments"): errors.append("Agent 1: no segments")
+
+    if not a2: errors.append("Missing Agent 2 output")
+    elif not a2.get("keyword_opportunities"): errors.append("Agent 2: no keywords")
+
+    if not a3: errors.append("Missing Agent 3 output")
+    else:
+        if not a3.get("unanswered_buyer_questions"): errors.append("Agent 3: no buyer questions")
+        if not a3.get("content_gaps"): errors.append("Agent 3: no content gaps")
+        if not a3.get("opportunity_prioritization"): errors.append("Agent 3: no prioritization")
+
+    if errors:
+        for e in errors:
+            print(f"  ✗ {e}")
+        return "fail"
+    print("  ✓ All checks passed.")
+    return "pass"
+```
+
+Graph edges:
+```
+agent1 ──┐
+          ├──► agent3 ──► verify ──► pass ──► report_writer ──► END
+agent2 ──┘               │           └──► fail ──► END (with error)
+                         verify
+```
+
+The verify node has two conditional edges:
+- `"pass"` → `report_writer` node
+- `"fail"` → `END` (logs errors but doesn't crash)
 
 ### Step 7: Update report writer
 **File:** `markdown_report.py`
@@ -243,6 +305,12 @@ def test_run_returns_agent1_output():
     assert all(s.name for s in output.customer_segments)
 ```
 
+Also add a test for the verification function:
+```python
+def test_verify_rejects_missing_output():
+    assert verify_outputs({}) == "fail"
+```
+
 ---
 
 ## Verification
@@ -277,3 +345,5 @@ cat output/report_*.md | grep -E "(Unanswered buyer questions|Content gap|Opport
 3. **No-hallucination via prompt engineering** — every system prompt ends with "Use ONLY the data below. Do not add external knowledge." The structured output parsing enforces schema compliance.
 
 4. **Logging is in the agents, not a separate logger** — keeps visible communication co-located with the logic. The graph provides the orchestration frame.
+
+5. **Rule-based verification is a graph node, not an LLM** — deterministic schema/field checks as a conditional edge. If verification fails, the graph still terminates (logged errors) but produces no report. This is the "fail fast" guarantee.
