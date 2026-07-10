@@ -283,20 +283,20 @@ def _write_page(target_dir: pathlib.Path, slug: str, content: str) -> None:
 # ── Generate fallback page when site is blocked ───────────────────────────────
 
 
-def _generate_fallback(_site_key: str, site: dict, slug: str) -> str:
-    """Return pre-written realistic dealership page content for *slug*."""
-    pages = FALLBACK_PAGES.get(slug, {})
-    if _site_key in pages:
-        return pages[_site_key]
+# def _generate_fallback(_site_key: str, site: dict, slug: str) -> str:
+ #   """Return pre-written realistic dealership page content for *slug*."""
+  #  pages = FALLBACK_PAGES.get(slug, {})
+   # if _site_key in pages:
+    #    return pages[_site_key]
 
     # Generic fallback for any undiscovered page path
-    base = site["base_url"]
-    return f"""{slug.replace('-', ' ').title()} — {site['label']}
+   # base = site["base_url"]
+    #return f"""{slug.replace('-', ' ').title()} — {site['label']}
 
-Visit {base} for more information about this page.
-{site['label']} is a Ford dealership serving the {site['location']} area.
-Contact the dealership directly for details about {slug.replace('-', ' ')}.
-"""
+# Visit {base} for more information about this page.
+# {site['label']} is a Ford dealership serving the {site['location']} area.
+# Contact the dealership directly for details about {slug.replace('-', ' ')}.
+#""" 
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
