@@ -14,7 +14,7 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env — set LLM_API_KEY and optionally LLM_PROVIDER/LLM_MODEL
 
-# 3. Pre-scrape dealership sites (one-time setup)
+# 3. Pre-scrape dealership sites (one-time setup) // na run na this one di na need irun ulit
 pip install playwright
 python -m playwright install chromium
 python scripts/scrape_basil_ford.py
