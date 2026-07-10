@@ -24,27 +24,33 @@ Three documented patterns from Anthropic's **"Building Effective Agents"** (Dec 
 
 These are not ad hoc shortcuts — they are documented practices for well-defined multi-step tasks. The architecture should name them explicitly.
 
+**Logging** — Python `logging` module with dual output:
+- Console handler (`INFO`+) — real-time agent communication
+- File handler (`DEBUG`+) — `output/transcript.log`, permanent record for judges
+This is the mechanism for the "agents visibly passing context" acceptance criterion.
+
 ---
 
 ## Files to modify (in order)
 
 | # | File | What changes |
 |---|------|-------------|
-| 1 | `requirements.txt` | Add `langchain-openai` (and optionally `langchain-anthropic`) for LLM calls via LangChain's `ChatOpenAI` / `with_structured_output()` |
+| 1 | `requirements.txt` | Add `langchain-openai` (and optionally `langchain-anthropic`) |
 | 2 | `src/confluence_iq/schemas.py` | Enrich all 3 agent output schemas to match acceptance criteria |
-| 3 | `src/confluence_iq/config.py` | Add an `llm()` factory function that returns a LangChain chat model from `.env` config |
-| 4 | `src/confluence_iq/prompts/data_synthesizer.md` | Rewrite with specific extraction instructions + output format mapping |
-| 5 | `src/confluence_iq/prompts/competitor_analyst.md` | Same — focused on SEO + site text analysis |
-| 6 | `src/confluence_iq/prompts/content_strategist.md` | Same — focused on gap analysis + prioritization |
-| 7 | `src/confluence_iq/agents/data_synthesizer.py` | Real LLM call: load prompt + data → call structured LLM → validate → return |
-| 8 | `src/confluence_iq/agents/competitor_analyst.py` | Same pattern, loads SEO trends + site texts |
-| 9 | `src/confluence_iq/agents/content_strategist.py` | Same pattern, takes Agent1 + Agent2 outputs as context |
-| 10 | `src/confluence_iq/graph.py` | Add logging + rule-based verification node + conditional edge |
-| 11 | `src/confluence_iq/report/markdown_report.py` | Update to render new schema fields (gaps, questions, priorities) |
-| 12 | `tests/test_data_synthesizer.py` | Update assertions — test schema validity, not hardcoded values |
-| 13 | `tests/test_competitor_analyst.py` | Same |
-| 14 | `tests/test_content_strategist.py` | Same |
-| 15 | `docs/architecture.md` | Update to name the three Anthropic patterns and show verification step |
+| 3 | `src/confluence_iq/config.py` | Add `llm()` factory + `setup_logging()` with dual handlers |
+| 4 | `src/confluence_iq/prompts/data_synthesizer.md` | Rewrite with extraction instructions + grounding rule |
+| 5 | `src/confluence_iq/prompts/competitor_analyst.md` | Same — SEO + site text focus |
+| 6 | `src/confluence_iq/prompts/content_strategist.md` | Same — gap analysis + prioritization focus |
+| 7 | `src/confluence_iq/agents/data_synthesizer.py` | Real LLM via `llm().with_structured_output()`, `logger.info()` calls |
+| 8 | `src/confluence_iq/agents/competitor_analyst.py` | Same pattern, loads SEO + site texts |
+| 9 | `src/confluence_iq/agents/content_strategist.py` | Same pattern, takes Agent1 + Agent2 as context |
+| 10 | `src/confluence_iq/graph.py` | `setup_logging()` at build time, logging in every node, verify node |
+| 11 | `src/confluence_iq/report/markdown_report.py` | Render new schema fields (gaps, questions, priorities) |
+| 12 | `run.py` | Call `setup_logging()` before building graph |
+| 13 | `tests/test_data_synthesizer.py` | Schema-validity assertions, not hardcoded values |
+| 14 | `tests/test_competitor_analyst.py` | Same |
+| 15 | `tests/test_content_strategist.py` | Same |
+| 16 | `docs/architecture.md` | Name the three Anthropic patterns + show verify node + logging |
 
 ---
 
@@ -81,10 +87,11 @@ Agent3Output (Content Strategist):
   - report_sections: list[str]                (headings for the markdown report)
 ```
 
-### Step 3: Add LLM factory
+### Step 3: Add LLM factory + logging setup
 **File:** `config.py`
 
-Add an `llm()` function:
+Two new functions:
+
 ```python
 def llm() -> BaseChatModel:
     """Return a LangChain chat model based on .env config."""
@@ -95,7 +102,36 @@ def llm() -> BaseChatModel:
         return ChatOpenAI(model=model, api_key=api_key, temperature=0)
     elif provider == "anthropic":
         return ChatAnthropic(model=model, api_key=api_key, temperature=0)
-    # fallback
+    raise ValueError(f"Unknown LLM_PROVIDER: {provider}")
+
+
+def setup_logging() -> logging.Logger:
+    """Dual-output logger: console (INFO) + output/transcript.log (DEBUG).
+
+    This is the "agents visibly passing context" acceptance criterion.
+    Console shows the orchestration flow in real time; transcript.log
+    is a permanent record for judges/submission.
+    """
+    logger = logging.getLogger("confluence_iq")
+    logger.setLevel(logging.DEBUG)
+
+    # Console handler — summary level
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    console.setFormatter(logging.Formatter("%(message)s"))
+    logger.addHandler(console)
+
+    # File handler — full verbosity
+    log_dir = HERE.parent.parent / "output"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    fh = logging.FileHandler(log_dir / "transcript.log", mode="w")
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(logging.Formatter(
+        "%(asctime)s [%(name)s] %(levelname)s %(message)s"
+    ))
+    logger.addHandler(fh)
+
+    return logger
 ```
 
 ### Step 4: Rewrite prompts
@@ -144,85 +180,84 @@ Produce:
 Every recommendation must trace to evidence in Agent 1 or Agent 2's output.
 ```
 
-### Step 5: Implement agents with LLM calls
+### Step 5: Implement agents with LLM calls + logging
 **Files:** `agents/data_synthesizer.py`, `competitor_analyst.py`, `content_strategist.py`
 
-Each agent follows the same pattern:
+Each agent gets a module-level `logger = logging.getLogger("confluence_iq.agentN")` and uses `logger.info()` instead of `print()`:
 
 ```python
+import json
+import logging
+import pathlib
+
+from langchain_core.messages import SystemMessage, HumanMessage
+
+from ..config import llm
+from ..schemas import Agent1Output
+from ..tools.loaders import load_customer_data
+
+HERE = pathlib.Path(__file__).resolve().parent
+logger = logging.getLogger("confluence_iq.agent1")
+
+
 class DataSynthesizerAgent:
+
     @staticmethod
     def run(state: dict) -> dict:
-        print("\n" + "="*60)
-        print("  Agent 1: Data Synthesizer — analysing customer data...")
-        print("="*60)
+        logger.info("═╡ Agent 1: Data Synthesizer ╞" + "═"*40)
+        logger.info("Reading customer data...")
 
-        # 1. Load data
         data = load_customer_data()
+        prompt = (HERE.parent / "prompts" / "data_synthesizer.md").read_text()
 
-        # 2. Load system prompt
-        prompt_path = HERE.parent / "prompts" / "data_synthesizer.md"
-        system_prompt = prompt_path.read_text()
+        logger.info("Calling LLM with %d customer segments ...",
+                     len(data.get("customer_segments", [])))
 
-        # 3. Build full prompt with data injected
-        user_prompt = f"Here is the customer data:\n{json.dumps(data, indent=2)}\n\nOutput JSON matching this schema:\n{Agent1Output.model_json_schema()}"
-
-        # 4. Call LLM with structured output
         chat = llm()
-        structured_llm = chat.with_structured_output(Agent1Output)
-        output = structured_llm.invoke([
-            SystemMessage(system_prompt),
-            HumanMessage(user_prompt),
+        structured = chat.with_structured_output(Agent1Output)
+        output = structured.invoke([
+            SystemMessage(prompt),
+            HumanMessage(f"Customer data:\n{json.dumps(data, indent=2)}"),
         ])
 
-        # 5. Print reasoning (visible communication)
-        print(f"  → Found {len(output.customer_segments)} customer segments")
-        print(f"  → Top pain points: {[p for s in output.customer_segments for p in s.pain_points][:3]}")
-        print(f"  → Key insights: {len(output.key_insights)} identified")
+        logger.info("Found %d customer segments", len(output.customer_segments))
+        for seg in output.customer_segments:
+            logger.info("  • %s — pain points: %s",
+                        seg.name, ", ".join(seg.pain_points))
+        logger.info("Key insights: %d identified", len(output.key_insights))
+        logger.info("Agent 1 complete. Passing to Agent 3.")
 
         return {"agent1_output": output.model_dump()}
 ```
 
-The `competitor_analyst.py` additionally loads site texts via `load_site_texts()` and the agent 3 receives `agent1_output` and `agent2_output` from state.
+The `competitor_analyst.py` additionally loads site texts via `load_site_texts()`. The `content_strategist.py` receives `agent1_output` and `agent2_output` from state and logs its comparison reasoning.
 
-### Step 6: Visible agent communication + rule-based verification in graph
-**File:** `graph.py`
+### Step 6: Logging + rule-based verification in graph
+**File:** `graph.py`, `run.py`
 
-**Visible communication** — stdout logging that makes agent passing visible:
+**`run.py`** — initialise logging before the graph:
+```python
+from confluence_iq.config import setup_logging
+from confluence_iq.graph import build_graph
 
-```
-═╡ Starting Agent 1 — Data Synthesizer ╞══════════════════════════
-  [Agent 1 prints findings]
-  ✓ Agent 1 complete. Passing customer insights to Agent 3.
-
-═╡ Starting Agent 2 — Competitor Analyst ╞════════════════════════
-  [Agent 2 prints findings]
-  ✓ Agent 2 complete. Passing competitive analysis to Agent 3.
-
-═╡ Starting Agent 3 — Content Strategist ╞════════════════════════
-  Reading Agent 1's customer insights...
-  Reading Agent 2's competitive analysis...
-  Comparing customer needs vs. existing site content...
-  [Agent 3 prints findings]
-  ✓ Agent 3 complete.
-
-═╡ Rule-based verification ╞══════════════════════════════════════
-  → Checking Agent 1 output schema... ✓
-  → Checking Agent 2 output schema... ✓
-  → Checking Agent 3 has unanswered_buyer_questions... ✓
-  → Checking Agent 3 has content_gaps... ✓
-  → Checking Agent 3 has opportunity_prioritization... ✓
-  → Report content length: 2847 chars ✓
-  ✓ All checks passed.
-
-✓ Report written to output/report_20260710_143022.md
+def main():
+    logger = setup_logging()
+    logger.info("Confluence IQ Agents — starting pipeline")
+    graph = build_graph()
+    final = graph.invoke({})
+    logger.info("Report written to %s", final["report_path"])
 ```
 
-**Rule-based verification** — add a `verify` node and a conditional edge:
+**`graph.py`** — add a `verify_outputs` node and conditional edge:
 
 ```python
+import logging
+
+logger = logging.getLogger("confluence_iq.graph")
+
+
 def verify_outputs(state: AgentState) -> str:
-    """Deterministic checks — no LLM involved."""
+    """Deterministic checks — no LLM involved. Returns "pass" or "fail"."""
     errors = []
 
     a1 = state.get("agent1_output")
@@ -237,29 +272,46 @@ def verify_outputs(state: AgentState) -> str:
 
     if not a3: errors.append("Missing Agent 3 output")
     else:
-        if not a3.get("unanswered_buyer_questions"): errors.append("Agent 3: no buyer questions")
-        if not a3.get("content_gaps"): errors.append("Agent 3: no content gaps")
-        if not a3.get("opportunity_prioritization"): errors.append("Agent 3: no prioritization")
+        if not a3.get("unanswered_buyer_questions"):
+            errors.append("Agent 3: no unanswered buyer questions")
+        if not a3.get("content_gaps"):
+            errors.append("Agent 3: no content gaps")
+        if not a3.get("opportunity_prioritization"):
+            errors.append("Agent 3: no opportunity prioritization")
 
+    logger.info("═╡ Rule-based verification ╞" + "═"*40)
     if errors:
         for e in errors:
-            print(f"  ✗ {e}")
+            logger.error("  ✗ %s", e)
+        logger.error("  → Report rejected. Check transcript.log for details.")
         return "fail"
-    print("  ✓ All checks passed.")
+
+    logger.info("  ✓ All required fields present")
+    logger.info("  → Report approved.")
     return "pass"
 ```
 
-Graph edges:
-```
-agent1 ──┐
-          ├──► agent3 ──► verify ──► pass ──► report_writer ──► END
-agent2 ──┘               │           └──► fail ──► END (with error)
-                         verify
-```
+Graph wiring:
+```python
+builder.add_node("data_synthesizer", DataSynthesizerAgent.run)
+builder.add_node("competitor_analyst", CompetitorAnalystAgent.run)
+builder.add_node("content_strategist", ContentStrategistAgent.run)
+builder.add_node("verify", verify_outputs)
+builder.add_node("report_writer", write_report_node)
 
-The verify node has two conditional edges:
-- `"pass"` → `report_writer` node
-- `"fail"` → `END` (logs errors but doesn't crash)
+builder.add_edge(START, "data_synthesizer")
+builder.add_edge(START, "competitor_analyst")
+builder.add_edge("data_synthesizer", "content_strategist")
+builder.add_edge("competitor_analyst", "content_strategist")
+builder.add_edge("content_strategist", "verify")
+
+builder.add_conditional_edges(
+    "verify",
+    lambda s: s["verdict"],  # verify stores "pass"/"fail" in state
+    {"pass": "report_writer", "fail": END},
+)
+builder.add_edge("report_writer", END)
+```
 
 ### Step 7: Update report writer
 **File:** `markdown_report.py`
@@ -295,9 +347,11 @@ New report structure:
 ### Step 8: Update tests
 **Files:** `tests/*.py`
 
-Switch from hardcoded-value assertions to schema-validity checks (since LLM output varies):
+Switch from hardcoded-value assertions to schema-validity checks (LLM output varies):
 
 ```python
+from confluence_iq.schemas import Agent1Output
+
 def test_run_returns_agent1_output():
     result = DataSynthesizerAgent.run({})
     output = Agent1Output(**result["agent1_output"])
@@ -308,14 +362,13 @@ def test_run_returns_agent1_output():
 Also add a test for the verification function:
 ```python
 def test_verify_rejects_missing_output():
-    assert verify_outputs({}) == "fail"
+    from confluence_iq.graph import verify_outputs
+    assert verify_outputs({"agent1_output": {}}) == "fail"
 ```
 
 ---
 
 ## Verification
-
-After implementation, verify end-to-end:
 
 ```bash
 cd confluence-iq-agents
@@ -330,8 +383,26 @@ python run.py
 # 3. Report has all required sections
 cat output/report_*.md | grep -E "(Unanswered buyer questions|Content gap|Opportunity prioritization)"
 
-# 4. Check visible agent communication in stdout — should show agents
-#    printing findings and passing context between each other
+# 4. Transcript log captured everything
+cat output/transcript.log
+
+# 5. Console output shows agents communicating:
+#    ═╡ Agent 1: Data Synthesizer ╞══════════════════════════
+#    Reading customer data...
+#    Calling LLM with 2 customer segments ...
+#    Found 2 customer segments
+#      • Local commuters — pain points: trade-in value transparency, service wait times
+#      • Tourists / seasonal visitors — pain points: rental vs purchase confusion, short-term financing
+#    Agent 1 complete. Passing to Agent 3.
+#    ═╡ Agent 2: Competitor Analyst ╞════════════════════════
+#    Reading SEO trends + site texts for 2 domains...
+#    ...
+#    ═╡ Agent 3: Content Strategist ╞════════════════════════
+#    Comparing customer needs vs. existing site content...
+#    ...
+#    ═╡ Rule-based verification ╞════════════════════════════
+#      ✓ All required fields present
+#    Report written to output/report_20260710_143022.md
 ```
 
 ---
@@ -344,6 +415,6 @@ cat output/report_*.md | grep -E "(Unanswered buyer questions|Content gap|Opport
 
 3. **No-hallucination via prompt engineering** — every system prompt ends with "Use ONLY the data below. Do not add external knowledge." The structured output parsing enforces schema compliance.
 
-4. **Logging is in the agents, not a separate logger** — keeps visible communication co-located with the logic. The graph provides the orchestration frame.
+4. **Python logging, not print()** — dual output (console + `transcript.log`) satisfies the "agents visibly passing context" criterion. Console shows real-time orchestration; `transcript.log` is a permanent record for judges. Hierarchical loggers (`confluence_iq.agent1`, etc.) keep the transcript organised.
 
-5. **Rule-based verification is a graph node, not an LLM** — deterministic schema/field checks as a conditional edge. If verification fails, the graph still terminates (logged errors) but produces no report. This is the "fail fast" guarantee.
+5. **Rule-based verification is a graph node, not an LLM** — deterministic schema/field checks as a conditional edge. If verification fails, the graph terminates with logged errors but no report. This is the "fail fast" guarantee and the third Anthropic pattern.
