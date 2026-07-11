@@ -1,23 +1,45 @@
-"""Agent 3 — Content Strategist: synthesise agent 1 & 2 into a report."""
+"""Agent 3 — Content Strategist: synthesise agent 1 & 2 into a report draft."""
 
+import json
+import logging
+
+from ..llm_client import call_llm
 from ..schemas import Agent3Output
-from ..report.markdown_report import write_report
+from ..tools.loaders import load_prompt
+
+logger = logging.getLogger("confluence_iq.agent3")
 
 
 class ContentStrategistAgent:
 
     @staticmethod
     def run(state: dict) -> dict:
-        # TODO: call LLM with content_strategist.md prompt -> Agent3Output
-        output = Agent3Output(
-            report_title="Confluence IQ Marketing Report",
-            sections=[
-                {"heading": "Executive Summary", "body": "Placeholder."},
-                {"heading": "Customer Insights", "body": "Placeholder."},
-                {"heading": "Competitive Landscape", "body": "Placeholder."},
-                {"heading": "Content Recommendations", "body": "Placeholder."},
-            ],
-            seo_keyword_targets=["used cars niagara falls", "auto service niagara falls"],
+        logger.info("=== Agent 3: Content Strategist ===")
+        agent1_output = state["agent1_output"]
+        agent2_output = state["agent2_output"]
+        logger.info(
+            "Received Agent 1 output (%d segments) and Agent 2 output (%d keyword opportunities)",
+            len(agent1_output["customer_segments"]),
+            len(agent2_output["keyword_opportunities"]),
         )
-        path = write_report(output)
-        return {"agent3_output": output.model_dump(), "report_path": path}
+
+        prompt = load_prompt("content_strategist")
+        user_content = (
+            f"Agent 1 output (customer insights):\n{json.dumps(agent1_output, indent=2)}\n\n"
+            f"Agent 2 output (competitive analysis):\n{json.dumps(agent2_output, indent=2)}"
+        )
+        output, thinking = call_llm(
+            system_prompt=prompt,
+            user_content=user_content,
+            output_schema=Agent3Output,
+        )
+        logger.debug("Agent 3 model reasoning: %s", thinking)
+        logger.info(
+            "Agent 3 drafted %d unanswered questions, %d content gaps, %d opportunities",
+            len(output.unanswered_buyer_questions),
+            len(output.content_gaps),
+            len(output.opportunity_prioritization),
+        )
+        logger.info("Agent 3 complete. Passing to Verifier.")
+
+        return {"agent3_output": output.model_dump()}
