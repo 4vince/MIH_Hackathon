@@ -30,3 +30,21 @@ def load_site_texts() -> dict[str, str]:
                 parts.append(txt.read_text(encoding="utf-8"))
             result[domain_dir.name] = "\n".join(parts)
     return result
+
+
+PROMPTS_DIR = HERE.parent / "prompts"
+
+
+def load_prompt(name: str) -> str:
+    path = PROMPTS_DIR / f"{name}.md"
+    return path.read_text(encoding="utf-8")
+
+
+def load_raw_corpus_text() -> str:
+    """Concatenate all raw source data into one text blob for the verifier."""
+    import json
+
+    customer_data = json.dumps(load_customer_data())
+    seo_trends = json.dumps(load_seo_trends())
+    site_texts = "\n".join(load_site_texts().values())
+    return "\n".join([customer_data, seo_trends, site_texts])
