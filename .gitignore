@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Environment secrets (keep .env.example tracked)
+.env
+
+# Generated pipeline output (keep the directory via .gitkeep)
+confluence-iq-agents/output/*
+!confluence-iq-agents/output/.gitkeep
+
+# Superpowers SDD scratch workspace (task briefs, reports, progress ledger)
+.superpowers/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
