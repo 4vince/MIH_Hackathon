@@ -1,24 +1,114 @@
 {
-  "business_name": "Basil Ford of Niagara Falls",
-  "location": "Niagara Falls, ON",
-  "industry": "Automotive — Sales & Service",
+  "business_name": "Basil Ford",
+  "location": "Western New York & Niagara Region",
+  "locations": [
+    {
+      "dealership": "Basil Ford of Cheektowaga",
+      "address": "1235 Walden Ave, Cheektowaga, NY 14225",
+      "services": ["new_vehicle_sales", "used_vehicle_sales", "service_center", "parts", "financing"]
+    },
+    {
+      "dealership": "Basil Ford of Niagara Falls",
+      "address": "1700 Factory Outlet Blvd, Niagara Falls, NY 14304",
+      "services": ["new_vehicle_sales", "used_vehicle_sales", "service_center", "parts", "financing"]
+    }
+  ],
   "customer_segments": [
     {
       "segment": "Local commuters",
       "size_estimate": "large",
-      "pain_points": ["trade-in value transparency", "service wait times"]
+      "primary_location": "Cheektowaga",
+      "pain_points": [
+        "trade-in value transparency during the purchase process",
+        "service wait times for routine maintenance",
+        "unclear pricing on advertised specials vs out-the-door price",
+        "limited Saturday service hours for working professionals"
+      ],
+      "common_vehicles_of_interest": ["Ford Escape", "Ford Explorer", "Ford Maverick"]
     },
     {
-      "segment": "Tourists / seasonal visitors",
+      "segment": "Tourists and seasonal visitors",
       "size_estimate": "moderate",
-      "pain_points": ["rental vs purchase confusion", "short-term financing"]
+      "primary_location": "Niagara Falls",
+      "pain_points": [
+        "rental vs purchase confusion for short-term stays",
+        "short-term financing options for seasonal workers",
+        "lack of clear info on shuttle or loaner vehicles during service",
+        "out-of-state registration and inspection requirements"
+      ]
+    },
+    {
+      "segment": "EV-curious buyers",
+      "size_estimate": "small but growing",
+      "primary_location": "Both",
+      "pain_points": [
+        "unclear EV charging infrastructure details at home and locally",
+        "range anxiety and real-world winter range data for Western NY",
+        "confusion about federal and state EV tax credit eligibility",
+        "lack of side-by-side EV vs hybrid cost-of-ownership comparisons on the website"
+      ],
+      "common_vehicles_of_interest": ["Ford Mustang Mach-E", "Ford F-150 Lightning", "Ford Escape PHEV"]
+    },
+    {
+      "segment": "Commercial and fleet buyers",
+      "size_estimate": "moderate",
+      "primary_location": "Cheektowaga",
+      "pain_points": [
+        "slow response times on fleet quote requests",
+        "no dedicated fleet sales contact listed on the website",
+        "unclear commercial vehicle upfit and accessory options",
+        "limited visible inventory of Ford Transit and E-Transit configurations"
+      ],
+      "common_vehicles_of_interest": ["Ford Transit", "Ford F-150", "Ford E-Transit", "Ford Super Duty"]
+    },
+    {
+      "segment": "First-time car buyers",
+      "size_estimate": "moderate",
+      "primary_location": "Both",
+      "pain_points": [
+        "overwhelming financing terminology and lack of beginner-friendly explainers",
+        "uncertainty about co-signer requirements and minimum credit scores",
+        "online inventory not clearly labeled which vehicles qualify for special APR offers",
+        "no clear comparison tool for new vs certified pre-owned total cost"
+      ]
+    },
+    {
+      "segment": "Loyal service repeat customers",
+      "size_estimate": "large",
+      "primary_location": "Both",
+      "pain_points": [
+        "difficulty scheduling service appointments online — limited time slots shown",
+        "lack of transparent service pricing or estimated labor hours before booking",
+        "no digital multi-point inspection report shared after service visits",
+        "winter tire changeover scheduling bottlenecks in October-November"
+      ]
     }
   ],
-  "current_marketing_channels": ["Google Ads", "Facebook", "Dealership website", "Direct mail"],
+  "current_marketing_channels": [
+    "Google Ads",
+    "Facebook",
+    "Dealership website",
+    "Direct mail",
+    "Instagram",
+    "YouTube",
+    "Local radio"
+  ],
   "revenue_breakdown": {
-    "new_vehicle_sales": 0.45,
-    "used_vehicle_sales": 0.30,
-    "service_parts": 0.20,
-    "financing_insurance": 0.05
+    "new_vehicle_sales": 0.42,
+    "used_vehicle_sales": 0.28,
+    "service_and_parts": 0.22,
+    "financing_and_insurance": 0.08
+  },
+  "collected_data_sources": [
+    "CRM customer feedback forms",
+    "Service department surveys (post-visit)",
+    "Website chat transcripts",
+    "Google Business Profile Q&A and reviews",
+    "Sales call logs and email inquiries"
+  ],
+  "seasonal_trends": {
+    "peak_service_months": ["October", "November", "April", "May"],
+    "peak_sales_months": ["March", "April", "December"],
+    "tourist_season": "May through September"
   }
 }
