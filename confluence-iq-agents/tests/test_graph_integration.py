@@ -60,8 +60,9 @@ def test_full_pipeline_runs_and_strips_fabricated_claim(mock_ds_llm, mock_ca_llm
     final_state = graph.invoke({})
 
     assert final_state["report_path"]
-    assert len(final_state["flagged_claims"]) == 1
-    assert "Fabricated gap" in final_state["flagged_claims"][0]
+    assert len(final_state["flagged_claims"]) == 2
+    assert any("Fabricated gap" in item for item in final_state["flagged_claims"])
+    assert any("no EV FAQ" in item for item in final_state["flagged_claims"])
 
     report_text = mr.pathlib.Path(final_state["report_path"]).read_text(encoding="utf-8")
     assert "No EV FAQ" in report_text

@@ -1,7 +1,9 @@
 """Tests for the deterministic claim verifier (no LLM involved)."""
 
-from confluence_iq.schemas import Agent3Output, ContentGap, Opportunity
-from confluence_iq.verifier import claim_is_grounded, verify_agent3_output
+import json
+
+from confluence_iq.schemas import Agent1Output, Agent2Output, Agent3Output, ContentGap, KeywordOpportunity, Opportunity
+from confluence_iq.verifier import claim_is_grounded, verify_agent1_output, verify_agent2_output, verify_agent3_output
 
 
 def test_claim_is_grounded_true_for_matching_text():
@@ -75,3 +77,56 @@ def test_verify_agent3_output_strips_unsourced_buyer_question_only():
     ]
     assert len(flagged) == 1
     assert "fabricated question" in flagged[0].lower()
+
+
+def test_verify_agent1_output_strips_unsourced_key_insight():
+    agent1_output = Agent1Output(
+        business_name="Basil Ford of Niagara Falls",
+        location="Niagara Falls, ON",
+        customer_segments=[],
+        key_insights=[
+            "New vehicle sales make up 45 percent of revenue",
+            "Completely fabricated insight about a metric never mentioned anywhere",
+        ],
+        recommended_channels=[],
+    )
+    corpus = json.dumps({"revenue_breakdown": {"new_vehicle_sales": 0.45}})
+
+    cleaned, flagged = verify_agent1_output(agent1_output, corpus)
+
+    assert cleaned.key_insights == ["New vehicle sales make up 45 percent of revenue"]
+    assert len(flagged) == 1
+    assert "fabricated insight" in flagged[0].lower()
+
+
+def test_verify_agent2_output_strips_unsourced_keyword_weakness_and_gap():
+    agent2_output = Agent2Output(
+        site_summary={},
+        keyword_opportunities=[
+            KeywordOpportunity(term="used cars niagara falls ontario", volume=1900, difficulty=44, relevance="underrepresented"),
+            KeywordOpportunity(term="completely invented keyword nobody searched", volume=99999, difficulty=1, relevance="fabricated"),
+        ],
+        competitor_weaknesses=[
+            "low domain authority compared to Queenston Chevrolet",
+            "fabricated claim about a competitor that does not exist",
+        ],
+        observed_content_gaps=[
+            "thin service page content",
+            "fabricated gap that was never observed",
+        ],
+    )
+    corpus = json.dumps({
+        "keywords": [{"term": "used cars niagara falls ontario", "volume": 1900, "difficulty": 44}],
+        "competitors": [{"name": "Queenston Chevrolet", "domain_authority": 41}],
+        "site_note": "auto service niagara falls page content is thin on FAQs",
+    })
+
+    cleaned, flagged = verify_agent2_output(agent2_output, corpus)
+
+    assert [kw.term for kw in cleaned.keyword_opportunities] == ["used cars niagara falls ontario"]
+    assert cleaned.competitor_weaknesses == ["low domain authority compared to Queenston Chevrolet"]
+    assert cleaned.observed_content_gaps == ["thin service page content"]
+    assert len(flagged) == 3
+    assert any("invented keyword" in item for item in flagged)
+    assert any("does not exist" in item for item in flagged)
+    assert any("never observed" in item for item in flagged)
