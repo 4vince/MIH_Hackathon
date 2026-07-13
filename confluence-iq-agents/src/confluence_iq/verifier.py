@@ -33,9 +33,16 @@ def verify_agent3_output(
     agent2_output: dict,
     raw_corpus: str,
 ) -> tuple[Agent3Output, list[str]]:
-    """Strip content gaps / opportunities whose evidence/rationale isn't grounded in source data."""
+    """Strip buyer questions / content gaps / opportunities whose text isn't grounded in source data."""
     corpus = " ".join([json.dumps(agent1_output), json.dumps(agent2_output), raw_corpus])
     flagged: list[str] = []
+
+    kept_questions = []
+    for question in agent3_output.unanswered_buyer_questions:
+        if claim_is_grounded(question, corpus):
+            kept_questions.append(question)
+        else:
+            flagged.append(f'Unanswered buyer question — unsourced: "{question}"')
 
     kept_gaps = []
     for gap in agent3_output.content_gaps:
@@ -52,6 +59,7 @@ def verify_agent3_output(
             flagged.append(f'Opportunity "{opp.recommendation}" — unsourced rationale: "{opp.rationale}"')
 
     cleaned = agent3_output.model_copy(update={
+        "unanswered_buyer_questions": kept_questions,
         "content_gaps": kept_gaps,
         "opportunity_prioritization": kept_opportunities,
     })

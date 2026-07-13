@@ -1,9 +1,13 @@
 """httpx-based client for the internal Ollama-backed LLM endpoint (api.iamtzar.com)."""
 
+import logging
+
 import httpx
 from pydantic import BaseModel, ValidationError
 
 from .config import LLM_BASE_URL, LLM_MODEL
+
+logger = logging.getLogger("confluence_iq.llm_client")
 
 
 def call_llm(
@@ -47,7 +51,15 @@ def call_llm(
         except ValidationError as exc:
             last_error = exc
             if attempt == max_retries:
+                logger.warning(
+                    "call_llm: %s failed schema validation on final attempt (%d/%d): %s",
+                    output_schema.__name__, attempt + 1, max_retries + 1, exc,
+                )
                 break
+            logger.warning(
+                "call_llm: %s failed schema validation on attempt %d/%d, retrying with correction: %s",
+                output_schema.__name__, attempt + 1, max_retries + 1, exc,
+            )
             messages = messages + [
                 {"role": "assistant", "content": message["content"]},
                 {

@@ -18,7 +18,10 @@ def test_claim_is_grounded_false_for_fabricated_text():
 
 def test_verify_agent3_output_strips_unsourced_claims():
     agent3_output = Agent3Output(
-        unanswered_buyer_questions=["Does Basil Ford offer EV charging installation?"],
+        unanswered_buyer_questions=[
+            "Does Basil Ford of Niagara Falls offer EV charging installation for tourists?",
+            "What is the store's internal profit margin on financing add-ons?",
+        ],
         content_gaps=[
             ContentGap(
                 gap="No EV FAQ", site="basilford.com", severity="medium",
@@ -36,12 +39,39 @@ def test_verify_agent3_output_strips_unsourced_claims():
             ),
         ],
     )
-    corpus = "Tourists and seasonal visitors reported EV charging confusion and rental versus purchase questions."
+    corpus = (
+        "Tourists and seasonal visitors reported EV charging confusion and rental "
+        "versus purchase questions at Basil Ford of Niagara Falls."
+    )
 
     cleaned, flagged = verify_agent3_output(agent3_output, {}, {}, corpus)
 
+    assert cleaned.unanswered_buyer_questions == [
+        "Does Basil Ford of Niagara Falls offer EV charging installation for tourists?"
+    ]
     assert len(cleaned.content_gaps) == 1
     assert cleaned.content_gaps[0].gap == "No EV FAQ"
     assert len(cleaned.opportunity_prioritization) == 1
+    assert len(flagged) == 2
+    assert any("Fabricated gap" in item for item in flagged)
+    assert any("profit margin" in item for item in flagged)
+
+
+def test_verify_agent3_output_strips_unsourced_buyer_question_only():
+    agent3_output = Agent3Output(
+        unanswered_buyer_questions=[
+            "How is my trade-in value transparency calculated for local commuters?",
+            "Completely fabricated question about a topic never mentioned anywhere",
+        ],
+        content_gaps=[],
+        opportunity_prioritization=[],
+    )
+    corpus = "Local commuters reported trade-in value transparency concerns during service visits."
+
+    cleaned, flagged = verify_agent3_output(agent3_output, {}, {}, corpus)
+
+    assert cleaned.unanswered_buyer_questions == [
+        "How is my trade-in value transparency calculated for local commuters?"
+    ]
     assert len(flagged) == 1
-    assert "Fabricated gap" in flagged[0]
+    assert "fabricated question" in flagged[0].lower()

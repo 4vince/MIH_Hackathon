@@ -1,5 +1,6 @@
 """Tests for the internal LLM client (HTTP layer mocked — no live network calls)."""
 
+import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -160,3 +161,29 @@ def test_call_llm_raises_after_exhausting_retries(mock_post):
         )
 
     assert mock_post.call_count == 3
+
+
+@patch("confluence_iq.llm_client.httpx.post")
+def test_call_llm_logs_warning_on_schema_validation_retry(mock_post, caplog):
+    fake_output = _fake_agent1_output()
+
+    malformed_response = MagicMock()
+    malformed_response.json.return_value = {
+        "message": {"role": "assistant", "content": '{"business_name": "Basil Ford"}', "thinking": ""},
+        "done": True,
+    }
+    malformed_response.raise_for_status.return_value = None
+
+    valid_response = MagicMock()
+    valid_response.json.return_value = {
+        "message": {"role": "assistant", "content": fake_output.model_dump_json(), "thinking": ""},
+        "done": True,
+    }
+    valid_response.raise_for_status.return_value = None
+
+    mock_post.side_effect = [malformed_response, valid_response]
+
+    with caplog.at_level(logging.WARNING, logger="confluence_iq.llm_client"):
+        call_llm(system_prompt="sys", user_content="usr", output_schema=Agent1Output)
+
+    assert any("retrying with correction" in record.message.lower() for record in caplog.records)
