@@ -164,27 +164,186 @@
   }
   .data-badge.show { opacity: 1; }
 
+  /* ── Loading / Connecting Splash ──────────────────────────── */
+  .splash {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0f172a;
+    z-index: 20;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+    border-radius: 16px;
+  }
+  .splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  .splash-ring {
+    width: 48px; height: 48px;
+    border: 3px solid #1e293b;
+    border-top-color: #22d3ee;
+    border-radius: 50%;
+    animation: splashSpin 0.8s linear infinite;
+  }
+  @keyframes splashSpin { to { transform: rotate(360deg); } }
+  .splash-text {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #64748b;
+    letter-spacing: 0.5px;
+  }
+  .splash-done .splash-ring {
+    border-top-color: #4ade80;
+    animation: none;
+    position: relative;
+  }
+  .splash-done .splash-ring::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: #4ade80;
+  }
+
+  /* ── Ambient idle pulse on the pipeline ─────────────────── */
+  .pipeline.ambient .card.idle {
+    animation: ambientPulse 3s ease-in-out infinite;
+  }
+  .pipeline.ambient .card.idle.c-a2 { animation-delay: 0.3s; }
+  .pipeline.ambient .card.idle.c-v1 { animation-delay: 0.6s; }
+  .pipeline.ambient .card.idle.c-v2 { animation-delay: 0.9s; }
+  .pipeline.ambient .card.idle.c-a3 { animation-delay: 1.2s; }
+  .pipeline.ambient .card.idle.c-v3 { animation-delay: 1.5s; }
+  .pipeline.ambient .card.idle.c-rw { animation-delay: 1.8s; }
+  @keyframes ambientPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(34,211,238,0); }
+    50% { box-shadow: 0 0 8px rgba(34,211,238,0.15); }
+  }
+
+  /* ── Ready-state glow on Run button ─────────────────────── */
+  .run-btn.ready {
+    animation: btnReadyPulse 2s ease-in-out infinite;
+  }
+  @keyframes btnReadyPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(59,130,246,0); }
+    50% { box-shadow: 0 0 12px rgba(59,130,246,0.4); }
+  }
+
   /* ── Event Log ──────────────────────────────────────────── */
+  .event-log-container {
+    border-top: 1px solid #334155;
+    flex-shrink: 0;
+  }
+  .event-log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1e293b;
+    padding: 0.4rem 2rem;
+    border-bottom: 1px solid #334155;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .event-log-header:hover { background: #1f3147; }
+  .event-log-header h3 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .event-log-header .log-count {
+    background: #334155;
+    color: #64748b;
+    font-size: 0.65rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .event-log-header .log-count.has-entries { color: #94a3b8; background: #475569; }
+  .log-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .log-header-actions button {
+    background: none;
+    border: 1px solid #334155;
+    color: #64748b;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    line-height: 1.4;
+  }
+  .log-header-actions button:hover { color: #e2e8f0; border-color: #475569; }
+  .log-header-actions .collapse-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    display: inline-block;
+  }
+  .log-header-actions .collapse-arrow.collapsed { transform: rotate(-90deg); }
+  .log-header-actions .clear-btn { font-size: 0.7rem; }
+
   .event-log {
     background: #0f172a;
-    border-top: 1px solid #334155;
     padding: 0.75rem 2rem;
-    max-height: 180px;
+    max-height: 200px;
     overflow-y: auto;
     font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
     font-size: 0.75rem;
     line-height: 1.6;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+  .event-log.collapsed {
+    max-height: 0 !important;
+    padding: 0 2rem !important;
+    overflow: hidden;
   }
   .event-log::-webkit-scrollbar { width: 6px; }
   .event-log::-webkit-scrollbar-track { background: #1e293b; }
   .event-log::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-  .log-entry { opacity: 0; animation: logFade 0.2s ease forwards; }
-  .log-entry .time { color: #64748b; }
-  .log-entry .level { font-weight: 600; }
-  .log-entry .level.info { color: #22d3ee; }
-  .log-entry .level.done { color: #4ade80; }
-  .log-entry .level.warn { color: #fbbf24; }
-  .log-entry .level.error { color: #f87171; }
+
+  .log-entry {
+    opacity: 0;
+    animation: logFade 0.2s ease forwards;
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    border-bottom: 1px solid rgba(51,65,85,0.2);
+    padding: 0.15rem 0;
+  }
+  .log-entry:last-child { border-bottom: none; }
+  .log-entry .time { color: #64748b; flex-shrink: 0; min-width: 4.5em; }
+  .log-entry .lvl-icon { flex-shrink: 0; min-width: 1.2em; text-align: center; }
+  .log-entry .msg { color: #cbd5e1; }
+  .log-entry.info .lvl-icon { color: #22d3ee; }
+  .log-entry.done  .lvl-icon { color: #4ade80; }
+  .log-entry.warn  .lvl-icon { color: #fbbf24; }
+  .log-entry.error .lvl-icon { color: #f87171; }
+
+  /* Run separator */
+  .log-run-sep {
+    text-align: center;
+    color: #334155;
+    font-size: 0.65rem;
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .log-run-sep::before, .log-run-sep::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px dashed #1e293b;
+  }
 
   @keyframes logFade { to { opacity: 1; } }
 
@@ -323,11 +482,29 @@
         <!-- Verify A3 → Report Writer -->
         <path id="arrow-v3rw" d="" />
       </svg>
+
+      <!-- ── Splash / Connecting overlay ────────────────────── -->
+      <div class="splash" id="splash">
+        <div class="splash-ring"></div>
+        <div class="splash-text" id="splashText">Connecting to server…</div>
+      </div>
     </div>
   </div>
 
   <!-- ═══ Event Log ══════════════════════════════════════════ -->
-  <div class="event-log" id="eventLog"></div>
+  <div class="event-log-container">
+    <div class="event-log-header" id="logHeader">
+      <h3>
+        📋 Event Log
+        <span class="log-count" id="logCount">0</span>
+      </h3>
+      <div class="log-header-actions">
+        <button class="clear-btn" id="clearLogBtn" title="Clear log">✕ Clear</button>
+        <span class="collapse-arrow" id="collapseArrow">▼</span>
+      </div>
+    </div>
+    <div class="event-log" id="eventLog"></div>
+  </div>
 
   <!-- ═══ Report Overlay ═════════════════════════════════════ -->
   <div class="report-overlay" id="reportOverlay">
@@ -342,15 +519,46 @@
   // ── Helpers ──────────────────────────────────────────────────
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
-  const log = (level, msg) => {
+
+  // ── Log entry icon map ───────────────────────────
+  const LOG_ICONS = { info: '●', done: '◆', warn: '▲', error: '✕' };
+
+  // ── Enhanced log helper ──────────────────────────
+  let logEntryCount = 0;
+  let logAutoScroll = true;
+
+  function log(level, msg) {
     const el = document.getElementById('eventLog');
+    if (!el) return;
     const t = new Date().toLocaleTimeString('en-US', { hour12: false });
     const div = document.createElement('div');
-    div.className = 'log-entry';
-    div.innerHTML = `<span class="time">${t}</span> <span class="level ${level}">${level.toUpperCase()}</span> ${msg}`;
+    div.className = `log-entry ${level}`;
+    div.innerHTML = `<span class="time">${t}</span><span class="lvl-icon">${LOG_ICONS[level] || '●'}</span><span class="msg">${msg}</span>`;
     el.appendChild(div);
-    anime({ targets: div, scrollTop: [el.scrollTop, el.scrollHeight], duration: 200, targets: el });
-  };
+    logEntryCount++;
+
+    // Update count badge
+    const countEl = document.getElementById('logCount');
+    if (countEl) {
+      countEl.textContent = logEntryCount;
+      countEl.classList.add('has-entries');
+    }
+
+    // Auto-scroll
+    if (logAutoScroll) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }
+
+  function logRunSep() {
+    const el = document.getElementById('eventLog');
+    if (!el) return;
+    const div = document.createElement('div');
+    div.className = 'log-run-sep';
+    const n = new Date().toLocaleTimeString('en-US', { hour12: false });
+    div.textContent = `▸ Run ${n}`;
+    el.appendChild(div);
+  }
 
   const cardMap = {
     data_synthesizer: 'card-a1',
@@ -473,10 +681,19 @@
 
   // ── SSE Handler ──────────────────────────────────────────────
   let eventSource = null;
+  let sseConnected = false;
 
   function connectSSE() {
     if (eventSource) eventSource.close();
     eventSource = new EventSource('/api/events');
+
+    // On first successful connection — dismiss splash, animate in
+    eventSource.addEventListener('open', () => {
+      if (!sseConnected) {
+        sseConnected = true;
+        onSSEReady();
+      }
+    });
 
     eventSource.addEventListener('message', (e) => {
       try {
@@ -490,6 +707,55 @@
     eventSource.addEventListener('error', () => {
       log('error', 'SSE connection lost — reconnecting…');
     });
+  }
+
+  // ── Called once when SSE first connects ──────────────────────
+  function onSSEReady() {
+    const splash = document.getElementById('splash');
+    const splashText = document.getElementById('splashText');
+
+    // Mark splash as done (checkmark)
+    if (splash) splash.classList.add('splash-done');
+    if (splashText) splashText.textContent = 'Connected ✓';
+
+    // After a brief pause, fade splash and reveal cards
+    setTimeout(() => {
+      if (splash) splash.classList.add('hidden');
+
+      // Stagger card entrance animation
+      const cards = $$('.card');
+      cards.forEach((card, i) => {
+        setTimeout(() => {
+          anime({
+            targets: card,
+            opacity: [0, 1],
+            translateY: [20, 0],
+            duration: 400,
+            easing: 'easeOutQuad',
+          });
+        }, 120 + i * 100);
+      });
+
+      // After all cards are in, add ambient idle glow + "Ready" status, then auto-run
+      setTimeout(() => {
+        document.getElementById('pipeline').classList.add('ambient');
+        document.getElementById('runBtn').classList.add('ready');
+        const dot = document.getElementById('statusDot');
+        const label = document.getElementById('statusLabel');
+        dot.className = 'status-dot idle';
+        label.textContent = 'Ready';
+        // Auto-start the pipeline so the user sees live progress immediately
+        setTimeout(() => {
+          logRunSep();
+          log('info', 'Auto-starting pipeline…');
+          fetch('/api/run', { method: 'POST' })
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); })
+            .catch(err => log('error', `Launch failed: ${err.message}`));
+        }, 600);
+      }, 120 + cards.length * 100 + 200);
+    }, 500);
+
+    log('done', 'Dashboard connected — ready to run');
   }
 
   function handleEvent(event) {
@@ -623,6 +889,16 @@
 
       case 'report_written': {
         log('done', `Report written: ${event.filename}`);
+        // Fetch and display the report content
+        fetch(`/api/report/${event.filename}`)
+          .then(r => r.ok ? r.text() : '# Failed to load report')
+          .then(md => {
+            document.getElementById('reportContent').innerHTML =
+              '<pre style="white-space:pre-wrap;font-size:0.8rem;line-height:1.6">'
+              + md.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+              + '</pre>';
+          })
+          .catch(() => {});
         break;
       }
 
@@ -630,6 +906,11 @@
         log('done', `Pipeline finished in ${event.elapsed_seconds || 0}s`);
         const btn = document.getElementById('runBtn');
         if (btn) btn.disabled = false;
+        // Auto-show the report overlay
+        const overlay = document.getElementById('reportOverlay');
+        if (overlay && !overlay.classList.contains('open')) {
+          overlay.classList.add('open');
+        }
         break;
       }
 
@@ -648,11 +929,23 @@
   async function runPipeline() {
     const btn = document.getElementById('runBtn');
     btn.disabled = true;
+    btn.classList.remove('ready');
+    document.getElementById('pipeline').classList.remove('ambient');
+
+    // Clear event log first
+    document.getElementById('eventLog').innerHTML = '';
+    logEntryCount = 0;
+    if (document.getElementById('logCount')) {
+      document.getElementById('logCount').textContent = '0';
+      document.getElementById('logCount').classList.remove('has-entries');
+    }
 
     // Reset all cards
     $$('.card').forEach(c => {
       c.className = c.className.replace(/\b(idle|running|done|error)\b/g, '').trim();
       c.classList.add('idle');
+      c.style.opacity = '1';
+      c.style.transform = '';
       const badge = c.querySelector('.badge');
       if (badge) { badge.textContent = 'idle'; badge.className = 'badge'; }
       const sum = c.querySelector('.output-summary');
@@ -670,8 +963,8 @@
       anime({ targets: b, opacity: 0, duration: 200 });
     });
 
-    // Clear event log
-    document.getElementById('eventLog').innerHTML = '';
+    // Add a run separator and first entry
+    logRunSep();
     log('info', 'Starting pipeline…');
 
     fetch('/api/run', { method: 'POST' })
@@ -702,6 +995,35 @@
   window.addEventListener('resize', updateArrows);
   // Initial compute after layout
   setTimeout(updateArrows, 100);
+
+  // ── Log collapse/expand ─────────────────────────────────────
+  const logHeader = document.getElementById('logHeader');
+  const eventLog = document.getElementById('eventLog');
+  const collapseArrow = document.getElementById('collapseArrow');
+  let logExpanded = true;
+
+  logHeader.addEventListener('click', (e) => {
+    // Don't toggle when clicking the clear button
+    if (e.target.closest('.clear-btn')) return;
+    logExpanded = !logExpanded;
+    eventLog.classList.toggle('collapsed', !logExpanded);
+    collapseArrow.classList.toggle('collapsed', !logExpanded);
+  });
+
+  // ── Clear log ───────────────────────────────────────────────
+  document.getElementById('clearLogBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    eventLog.innerHTML = '';
+    logEntryCount = 0;
+    const countEl = document.getElementById('logCount');
+    countEl.textContent = '0';
+    countEl.classList.remove('has-entries');
+  });
+
+  // ── Pin cards for entrance animation ────────────────────────
+  $$('.card').forEach(c => {
+    c.style.opacity = '0';
+  });
 
   // Connect to SSE on load
   connectSSE();
