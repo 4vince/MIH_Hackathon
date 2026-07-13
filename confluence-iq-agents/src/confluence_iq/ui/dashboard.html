@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Confluence IQ Agents</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ────────────────────────────────────────────── */
+  header {
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #64748b;
+    transition: background 0.3s;
+  }
+  .status-dot.idle { background: #64748b; }
+  .status-dot.running { background: #22d3ee; box-shadow: 0 0 8px #22d3ee; }
+  .status-dot.done { background: #4ade80; }
+  .status-dot.error { background: #f87171; }
+  .status-label { font-size: 0.85rem; color: #94a3b8; }
+  .run-btn {
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .run-btn:hover { background: #2563eb; }
+  .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Pipeline Area ─────────────────────────────────────── */
+  .pipeline-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    overflow: auto;
+  }
+  .pipeline {
+    position: relative;
+    display: grid;
+    grid-template-columns: 220px 60px 220px 80px 220px 60px 220px 60px 220px;
+    grid-template-rows: auto auto auto;
+    gap: 0;
+    align-items: center;
+    justify-items: center;
+    max-width: 1400px;
+  }
+
+  /* ── Agent Cards ───────────────────────────────────────── */
+  .card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    width: 200px;
+    text-align: center;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+  }
+  .card .icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  .card .name { font-weight: 600; font-size: 0.95rem; }
+  .card .role { font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; }
+  .card .badge {
+    display: inline-block;
+    background: #334155;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+  }
+  .card .badge.done-badge { background: #166534; color: #4ade80; }
+  .card .badge.error-badge { background: #7f1d1d; color: #fca5a5; }
+  .card.idle    { border-color: #334155; }
+  .card.running { border-color: #22d3ee; box-shadow: 0 0 12px rgba(34,211,238,0.3); }
+  .card.done    { border-color: #4ade80; }
+  .card.error   { border-color: #f87171; }
+
+  /* Verifier variant — slightly different shape */
+  .card.verify {
+    background: #1a2332;
+    border-style: dashed;
+    width: 180px;
+  }
+  .card.verify.running { border-color: #fbbf24; box-shadow: 0 0 12px rgba(251,191,36,0.3); }
+
+  /* ── Output summary inside cards ───────────────────────── */
+  .output-summary { font-size: 0.7rem; color: #64748b; margin-top: 0.25rem; min-height: 1em; }
+  .output-summary.has-data { color: #94a3b8; }
+
+  /* ── Grid placement ────────────────────────────────────── */
+  .c-a1  { grid-column: 1; grid-row: 1; }
+  .c-v1  { grid-column: 3; grid-row: 1; }
+  .c-a2  { grid-column: 1; grid-row: 2; }
+  .c-v2  { grid-column: 3; grid-row: 2; }
+  .c-a3  { grid-column: 5; grid-row: 1 / 3; }
+  .c-v3  { grid-column: 7; grid-row: 1 / 3; }
+  .c-rw  { grid-column: 9; grid-row: 1 / 3; }
+
+  /* ── SVG Arrows (absolute overlay) ─────────────────────── */
+  .arrows-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .arrows-svg path {
+    fill: none;
+    stroke: #475569;
+    stroke-width: 2;
+    stroke-dasharray: 0;
+    stroke-linecap: round;
+    opacity: 0.6;
+    transition: stroke 0.3s, opacity 0.3s;
+  }
+  .arrows-svg path.active { stroke: #22d3ee; opacity: 1; }
+
+  /* ── Data badge (floating label on arrows) ──────────────── */
+  .data-badge {
+    position: absolute;
+    background: #0f172a;
+    border: 1px solid #22d3ee;
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.65rem;
+    color: #22d3ee;
+    white-space: nowrap;
+    opacity: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .data-badge.show { opacity: 1; }
+
+  /* ── Event Log ──────────────────────────────────────────── */
+  .event-log {
+    background: #0f172a;
+    border-top: 1px solid #334155;
+    padding: 0.75rem 2rem;
+    max-height: 180px;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+    font-size: 0.75rem;
+    line-height: 1.6;
+  }
+  .event-log::-webkit-scrollbar { width: 6px; }
+  .event-log::-webkit-scrollbar-track { background: #1e293b; }
+  .event-log::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+  .log-entry { opacity: 0; animation: logFade 0.2s ease forwards; }
+  .log-entry .time { color: #64748b; }
+  .log-entry .level { font-weight: 600; }
+  .log-entry .level.info { color: #22d3ee; }
+  .log-entry .level.done { color: #4ade80; }
+  .log-entry .level.warn { color: #fbbf24; }
+  .log-entry .level.error { color: #f87171; }
+
+  @keyframes logFade { to { opacity: 1; } }
+
+  /* ── Final Report (inline) ──────────────────────────────── */
+  .report-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+  }
+  .report-overlay.open { display: flex; }
+  .report-panel {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    max-width: 900px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 2rem;
+    position: relative;
+  }
+  .report-panel h1, .report-panel h2, .report-panel h3 { color: #e2e8f0; margin-top: 1.5em; }
+  .report-panel h1:first-child { margin-top: 0; }
+  .report-panel p, .report-panel li { color: #cbd5e1; line-height: 1.7; }
+  .report-panel pre { background: #0f172a; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+  .report-panel code { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+  .report-close {
+    position: sticky; top: 0; float: right;
+    background: #334155; color: #e2e8f0;
+    border: none; width: 32px; height: 32px;
+    border-radius: 50%; cursor: pointer;
+    font-size: 1.1rem; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .report-close:hover { background: #475569; }
+</style>
+</head>
+<body>
+
+  <!-- ═══ Header ══════════════════════════════════════════════ -->
+  <header>
+    <h1>
+      <span class="status-dot idle" id="statusDot"></span>
+      Confluence IQ Agents
+      <span class="status-label" id="statusLabel">Idle</span>
+    </h1>
+    <button class="run-btn" id="runBtn">▶ Run Pipeline</button>
+  </header>
+
+  <!-- ═══ Pipeline ════════════════════════════════════════════ -->
+  <div class="pipeline-wrapper">
+    <div class="pipeline" id="pipeline">
+
+      <!-- ── Cards ─────────────────────────────────────────── -->
+      <div class="card idle c-a1" id="card-a1">
+        <div class="icon">📊</div>
+        <div class="name">Agent 1</div>
+        <div class="role">Data Synthesizer</div>
+        <div id="summary-a1" class="output-summary"></div>
+        <div id="badge-a1" class="badge">idle</div>
+      </div>
+
+      <div class="card verify idle c-v1" id="card-v1">
+        <div class="icon">🔍</div>
+        <div class="name">Verify A1</div>
+        <div class="role">Claim Checker</div>
+        <div id="summary-v1" class="output-summary"></div>
+        <div id="badge-v1" class="badge">idle</div>
+      </div>
+
+      <div class="card idle c-a2" id="card-a2">
+        <div class="icon">🔎</div>
+        <div class="name">Agent 2</div>
+        <div class="role">Competitor Analyst</div>
+        <div id="summary-a2" class="output-summary"></div>
+        <div id="badge-a2" class="badge">idle</div>
+      </div>
+
+      <div class="card verify idle c-v2" id="card-v2">
+        <div class="icon">🔍</div>
+        <div class="name">Verify A2</div>
+        <div class="role">Claim Checker</div>
+        <div id="summary-v2" class="output-summary"></div>
+        <div id="badge-v2" class="badge">idle</div>
+      </div>
+
+      <div class="card idle c-a3" id="card-a3">
+        <div class="icon">🧠</div>
+        <div class="name">Agent 3</div>
+        <div class="role">Content Strategist</div>
+        <div id="summary-a3" class="output-summary"></div>
+        <div id="badge-a3" class="badge">idle</div>
+      </div>
+
+      <div class="card verify idle c-v3" id="card-v3">
+        <div class="icon">✅</div>
+        <div class="name">Verify A3</div>
+        <div class="role">Claim Checker</div>
+        <div id="summary-v3" class="output-summary"></div>
+        <div id="badge-v3" class="badge">idle</div>
+      </div>
+
+      <div class="card idle c-rw" id="card-rw">
+        <div class="icon">📝</div>
+        <div class="name">Report</div>
+        <div class="role">Writer</div>
+        <div id="summary-rw" class="output-summary"></div>
+        <div id="badge-rw" class="badge">idle</div>
+      </div>
+
+      <!-- ── Data badges (floating on arrows) ──────────────── -->
+      <div class="data-badge" id="db-a1v1">passing data…</div>
+      <div class="data-badge" id="db-a2v2">passing data…</div>
+      <div class="data-badge" id="db-v1a3">verified ✓</div>
+      <div class="data-badge" id="db-v2a3">verified ✓</div>
+      <div class="data-badge" id="db-a3v3">checking…</div>
+      <div class="data-badge" id="db-v3rw">generating…</div>
+
+      <!-- ── SVG arrows ────────────────────────────────────── -->
+      <svg class="arrows-svg" id="arrowSvg" width="100%" height="100%">
+        <!-- Agent 1 → Verify A1 -->
+        <path id="arrow-a1v1" d="" />
+        <!-- Agent 2 → Verify A2 -->
+        <path id="arrow-a2v2" d="" />
+        <!-- Verify A1 → Agent 3 -->
+        <path id="arrow-v1a3" d="" />
+        <!-- Verify A2 → Agent 3 -->
+        <path id="arrow-v2a3" d="" />
+        <!-- Agent 3 → Verify A3 -->
+        <path id="arrow-a3v3" d="" />
+        <!-- Verify A3 → Report Writer -->
+        <path id="arrow-v3rw" d="" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- ═══ Event Log ══════════════════════════════════════════ -->
+  <div class="event-log" id="eventLog"></div>
+
+  <!-- ═══ Report Overlay ═════════════════════════════════════ -->
+  <div class="report-overlay" id="reportOverlay">
+    <div class="report-panel" id="reportPanel">
+      <button class="report-close" id="reportClose">✕</button>
+      <div id="reportContent"></div>
+    </div>
+  </div>
+
+  <!-- ═══ Script ═════════════════════════════════════════════ -->
+  <script>
+  // ── Helpers ──────────────────────────────────────────────────
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
+  const log = (level, msg) => {
+    const el = document.getElementById('eventLog');
+    const t = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    div.innerHTML = `<span class="time">${t}</span> <span class="level ${level}">${level.toUpperCase()}</span> ${msg}`;
+    el.appendChild(div);
+    anime({ targets: div, scrollTop: [el.scrollTop, el.scrollHeight], duration: 200, targets: el });
+  };
+
+  const cardMap = {
+    data_synthesizer: 'card-a1',
+    verify_agent1:    'card-v1',
+    competitor_analyst: 'card-a2',
+    verify_agent2:    'card-v2',
+    content_strategist: 'card-a3',
+    verify:           'card-v3',
+    report_writer:    'card-rw',
+  };
+
+  function setCard(node, status, summary) {
+    const id = cardMap[node];
+    if (!id) return;
+    const card = document.getElementById(id);
+    if (!card) return;
+    card.className = card.className.replace(/\b(idle|running|done|error)\b/g, '').trim();
+    card.classList.add(status);
+    const badge = card.querySelector('.badge');
+    if (badge) {
+      badge.textContent = status;
+      badge.className = 'badge' + (status === 'done' ? ' done-badge' : status === 'error' ? ' error-badge' : '');
+    }
+    const sum = card.querySelector('.output-summary');
+    if (sum && summary) {
+      sum.textContent = summary;
+      sum.classList.add('has-data');
+    }
+
+    // Update pipeline status header when all 7 are done
+    updateOverallStatus();
+  }
+
+  function updateOverallStatus() {
+    const all = ['card-a1','card-v1','card-a2','card-v2','card-a3','card-v3','card-rw'];
+    const statuses = all.map(id => {
+      const c = document.getElementById(id);
+      if (!c) return 'idle';
+      if (c.classList.contains('running')) return 'running';
+      if (c.classList.contains('done')) return 'done';
+      if (c.classList.contains('error')) return 'error';
+      return 'idle';
+    });
+    const dot = document.getElementById('statusDot');
+    const label = document.getElementById('statusLabel');
+    if (statuses.every(s => s === 'done')) {
+      dot.className = 'status-dot done';
+      label.textContent = 'Complete ✓';
+    } else if (statuses.some(s => s === 'error')) {
+      dot.className = 'status-dot error';
+      label.textContent = 'Error';
+    } else if (statuses.some(s => s === 'running')) {
+      dot.className = 'status-dot running';
+      label.textContent = 'Running…';
+    } else {
+      dot.className = 'status-dot idle';
+      label.textContent = 'Idle';
+    }
+  }
+
+  // ── Arrow path computation ──────────────────────────────────
+  function computeArrow(fromId, toId, offsetX1, offsetX2) {
+    // offsetX1/2 are adjustments when arrow target is offset (e.g. 80px gap)
+    const from = document.getElementById(fromId);
+    const to   = document.getElementById(toId);
+    if (!from || !to) return '';
+    const p = document.getElementById('pipeline');
+    const pRect = p.getBoundingClientRect();
+    const fRect = from.getBoundingClientRect();
+    const tRect = to.getBoundingClientRect();
+    const fx = fRect.right - pRect.left + (offsetX1 || 0);
+    const fy = fRect.top + fRect.height / 2 - pRect.top;
+    const tx = tRect.left - pRect.left - (offsetX2 || 0);
+    const ty = tRect.top + tRect.height / 2 - pRect.top;
+    const cx = (fx + tx) / 2;
+    return `M ${fx} ${fy} C ${cx} ${fy}, ${cx} ${ty}, ${tx} ${ty}`;
+  }
+
+  function updateArrows() {
+    const delay = t => t; // identity — paths are already laid out
+    const a1v1 = computeArrow('card-a1', 'card-v1', 4, 4);
+    document.getElementById('arrow-a1v1').setAttribute('d', a1v1);
+    const a2v2 = computeArrow('card-a2', 'card-v2', 4, 4);
+    document.getElementById('arrow-a2v2').setAttribute('d', a2v2);
+    const v1a3 = computeArrow('card-v1', 'card-a3', 4, 4);
+    document.getElementById('arrow-v1a3').setAttribute('d', v1a3);
+    const v2a3 = computeArrow('card-v2', 'card-a3', 4, 4);
+    document.getElementById('arrow-v2a3').setAttribute('d', v2a3);
+    const a3v3 = computeArrow('card-a3', 'card-v3', 4, 4);
+    document.getElementById('arrow-a3v3').setAttribute('d', a3v3);
+    const v3rw = computeArrow('card-v3', 'card-rw', 4, 4);
+    document.getElementById('arrow-v3rw').setAttribute('d', v3rw);
+  }
+
+  function animateArrow(pathId, badgeId, label) {
+    const path = document.getElementById(pathId);
+    const badge = document.getElementById(badgeId);
+    if (!path) return;
+    path.classList.add('active');
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    anime({
+      targets: path,
+      strokeDashoffset: [len, 0],
+      duration: 500,
+      easing: 'easeOutQuad',
+      begin: () => { log('info', `→ ${label}`); },
+    });
+    if (badge) {
+      badge.textContent = label;
+      anime({
+        targets: badge,
+        translateX: [10, 0],
+        opacity: [0, 1],
+        duration: 350,
+        easing: 'easeOutQuad',
+      });
+    }
+  }
+
+  // ── SSE Handler ──────────────────────────────────────────────
+  let eventSource = null;
+
+  function connectSSE() {
+    if (eventSource) eventSource.close();
+    eventSource = new EventSource('/api/events');
+
+    eventSource.addEventListener('message', (e) => {
+      try {
+        const event = JSON.parse(e.data);
+        handleEvent(event);
+      } catch (err) {
+        // ignore parse errors
+      }
+    });
+
+    eventSource.addEventListener('error', () => {
+      log('error', 'SSE connection lost — reconnecting…');
+    });
+  }
+
+  function handleEvent(event) {
+    switch (event.type) {
+
+      case 'graph_start':
+        log('info', 'Pipeline started');
+        break;
+
+      case 'node_start': {
+        const label = event.node;
+        setCard(label, 'running');
+        log('info', `${label} running…`);
+        // Animate card pulse
+        const el = document.getElementById(cardMap[label]);
+        if (el && (label === 'data_synthesizer' || label === 'competitor_analyst')) {
+          anime({
+            targets: el,
+            keyframes: [{ scale: 1 }, { scale: 1.02 }, { scale: 1 }],
+            duration: 1200,
+            loop: true,
+          });
+        }
+        // Amber pulse for verify nodes
+        if (label === 'verify_agent1' || label === 'verify_agent2' || label === 'verify') {
+          anime({
+            targets: el,
+            backgroundColor: ['#1a2332', '#2a2a1a', '#1a2332'],
+            duration: 800,
+            loop: true,
+            easing: 'easeInOutQuad',
+          });
+        }
+        break;
+      }
+
+      case 'node_end': {
+        const label = event.node;
+        const summary = event.summary || {};
+        let summaryText = '';
+        if (label === 'data_synthesizer') {
+          summaryText = `${summary.segments || 0} segments, ${summary.insights || 0} insights`;
+        } else if (label === 'verify_agent1' || label === 'verify_agent2' || label === 'verify') {
+          const f = summary.flagged || 0;
+          summaryText = f ? `${f} flagged` : '0 flagged ✓';
+        } else if (label === 'competitor_analyst') {
+          summaryText = `${summary.keywords || 0} keywords, ${summary.weaknesses || 0} weaknesses`;
+        } else if (label === 'content_strategist') {
+          summaryText = `${summary.gaps || 0} gaps, ${summary.opportunities || 0} opps`;
+        } else if (label === 'report_writer') {
+          summaryText = summary.path || 'done';
+        }
+        const hadError = event.error;
+        setCard(label, hadError ? 'error' : 'done', summaryText);
+        log(hadError ? 'error' : 'done', `${label} complete` + (summaryText ? ` — ${summaryText}` : ''));
+
+        // Stop running animations
+        const el = document.getElementById(cardMap[label]);
+        if (el) anime.remove(el);
+
+        // Animate settle
+        if (el) {
+          anime({
+            targets: el,
+            scale: [1.05, 1],
+            opacity: [0.7, 1],
+            duration: 400,
+            easing: 'easeOutQuad',
+          });
+        }
+        break;
+      }
+
+      case 'edge_traverse': {
+        const f = event.from_node;
+        const t = event.to_node;
+        const data = event.data_passed || {};
+        let arrowMap = {};
+        // Map node names to arrow IDs and badge IDs
+        if (f === 'data_synthesizer' && t === 'verify_agent1') {
+          arrowMap = { path: 'arrow-a1v1', badge: 'db-a1v1' };
+        } else if (f === 'competitor_analyst' && t === 'verify_agent2') {
+          arrowMap = { path: 'arrow-a2v2', badge: 'db-a2v2' };
+        } else if (f === 'verify_agent1' && t === 'content_strategist') {
+          arrowMap = { path: 'arrow-v1a3', badge: 'db-v1a3' };
+        } else if (f === 'verify_agent2' && t === 'content_strategist') {
+          arrowMap = { path: 'arrow-v2a3', badge: 'db-v2a3' };
+        } else if (f === 'content_strategist' && t === 'verify') {
+          arrowMap = { path: 'arrow-a3v3', badge: 'db-a3v3' };
+        } else if (f === 'verify' && t === 'report_writer') {
+          arrowMap = { path: 'arrow-v3rw', badge: 'db-v3rw' };
+        }
+        if (arrowMap.path) {
+          const parts = [];
+          for (const [k, v] of Object.entries(data)) {
+            parts.push(`${k}: ${v}`);
+          }
+          const label = `${f} → ${t}` + (parts.length ? ` (${parts.join(', ')})` : '');
+          animateArrow(arrowMap.path, arrowMap.badge, label);
+          log('info', `Data flowing: ${f} → ${t}`);
+        }
+        break;
+      }
+
+      case 'verifier_result': {
+        const node = event.node;
+        const cardId = cardMap[node];
+        const el = document.getElementById(cardId);
+        if (el) {
+          const f = event.flagged_count || 0;
+          const c = event.claims_checked || 0;
+          const summaryText = f ? `${f}/${c} flagged` : `${c}/${c} ok ✓`;
+          const sum = el.querySelector('.output-summary');
+          if (sum) {
+            sum.textContent = summaryText;
+            sum.classList.add('has-data');
+          }
+          log(f ? 'warn' : 'done', `${node}: ${summaryText}`);
+          // Flash claim rows
+          const rows = el.querySelectorAll('.claim-row');
+          anime({
+            targets: rows.length ? rows : el,
+            backgroundColor: [f ? '#7f1d1d' : '#166534', '#1a2332'],
+            duration: 600,
+            delay: anime.stagger ? anime.stagger(80) : 0,
+            easing: 'easeOutQuad',
+          });
+        }
+        break;
+      }
+
+      case 'report_written': {
+        log('done', `Report written: ${event.filename}`);
+        break;
+      }
+
+      case 'graph_end': {
+        log('done', `Pipeline finished in ${event.elapsed_seconds || 0}s`);
+        const btn = document.getElementById('runBtn');
+        if (btn) btn.disabled = false;
+        break;
+      }
+
+      case 'log_line': {
+        log(event.level || 'info', event.message || '');
+        break;
+      }
+
+      default:
+        // unknown event type — ignore
+        break;
+    }
+  }
+
+  // ── Trigger pipeline run ─────────────────────────────────────
+  async function runPipeline() {
+    const btn = document.getElementById('runBtn');
+    btn.disabled = true;
+
+    // Reset all cards
+    $$('.card').forEach(c => {
+      c.className = c.className.replace(/\b(idle|running|done|error)\b/g, '').trim();
+      c.classList.add('idle');
+      const badge = c.querySelector('.badge');
+      if (badge) { badge.textContent = 'idle'; badge.className = 'badge'; }
+      const sum = c.querySelector('.output-summary');
+      if (sum) { sum.textContent = ''; sum.classList.remove('has-data'); }
+    });
+
+    // Reset arrows
+    $$('.arrows-svg path').forEach(p => {
+      p.classList.remove('active');
+      p.style.strokeDashoffset = null;
+    });
+
+    // Hide badges
+    $$('.data-badge').forEach(b => {
+      anime({ targets: b, opacity: 0, duration: 200 });
+    });
+
+    // Clear event log
+    document.getElementById('eventLog').innerHTML = '';
+    log('info', 'Starting pipeline…');
+
+    fetch('/api/run', { method: 'POST' })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        log('done', 'Pipeline launched');
+      })
+      .catch(err => {
+        log('error', `Failed: ${err.message}`);
+        btn.disabled = false;
+      });
+  }
+
+  // ── Report overlay ───────────────────────────────────────────
+  document.getElementById('reportClose').addEventListener('click', () => {
+    document.getElementById('reportOverlay').classList.remove('open');
+  });
+  document.getElementById('reportOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      document.getElementById('reportOverlay').classList.remove('open');
+    }
+  });
+
+  // ── Init ─────────────────────────────────────────────────────
+  document.getElementById('runBtn').addEventListener('click', runPipeline);
+
+  // Recompute arrows on resize
+  window.addEventListener('resize', updateArrows);
+  // Initial compute after layout
+  setTimeout(updateArrows, 100);
+
+  // Connect to SSE on load
+  connectSSE();
+  </script>
+</body>
+</html>
