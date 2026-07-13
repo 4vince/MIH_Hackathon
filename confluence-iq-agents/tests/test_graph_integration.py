@@ -45,12 +45,26 @@ def _agent3_with_one_fabricated_claim() -> Agent3Output:
     )
 
 
+@patch("confluence_iq.graph.load_raw_corpus_text")
 @patch("confluence_iq.agents.content_strategist.call_llm")
 @patch("confluence_iq.agents.competitor_analyst.call_llm")
 @patch("confluence_iq.agents.data_synthesizer.call_llm")
-def test_full_pipeline_runs_and_strips_fabricated_claim(mock_ds_llm, mock_ca_llm, mock_cs_llm, tmp_path, monkeypatch):
+def test_full_pipeline_runs_and_strips_fabricated_claim(
+    mock_ds_llm, mock_ca_llm, mock_cs_llm, mock_load_corpus, tmp_path, monkeypatch
+):
     import confluence_iq.report.markdown_report as mr
     monkeypatch.setattr(mr, "OUTPUT_DIR", tmp_path)
+
+    # Fixed, controlled corpus instead of the real data files — keeps this test's
+    # grounded/ungrounded outcomes deterministic regardless of future edits to
+    # data/mock_customer_data.json or data/mock_seo_trends.json.
+    mock_load_corpus.return_value = (
+        "New vehicle sales make up 45 percent of revenue. "
+        "Local commuters reported trade-in value transparency concerns. "
+        "Used cars niagara falls ontario keyword volume 1900 difficulty 44. "
+        "Competitor analysis shows low domain authority for smaller sites. "
+        "Customers ask whether Basil Ford does offer EV charging installation services."
+    )
 
     mock_ds_llm.return_value = (_agent1(), "thinking 1")
     mock_ca_llm.return_value = (_agent2(), "thinking 2")
