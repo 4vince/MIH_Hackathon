@@ -229,16 +229,6 @@
       "domain": "westherrbuffalo.example.com",
       "domain_authority": 62,
       "estimated_monthly_traffic": 95000,
-      "business_type": "multi-dealership group (all makes)",
-      "locations_count": 14,
-      "primary_market": "Buffalo metro and Western NY",
-      "content_focus": [
-        "new inventory across 15+ brands",
-        "used inventory with search by body style",
-        "service center with online booking and coupons",
-        "financing and trade-in appraisal tools",
-        "buy online / reserve vehicle tool"
-      ],
       "known_strengths": [
         "dominant domain authority in the region",
         "comprehensive service content with online booking",
@@ -250,26 +240,13 @@
         "not Ford-specific — covers too many brands for deep expertise",
         "no dedicated EV FAQ or charging information section",
         "commercial/fleet page is generic with no Transit or E-Transit content"
-      ],
-      "google_review_rating": 4.3,
-      "google_review_count": 5200,
-      "top_pages_by_traffic": ["/used-inventory", "/service-appointment", "/value-your-trade", "/new-inventory"]
+      ]
     },
     {
       "name": "Niagara Frontier Ford",
       "domain": "niagarafrontierford.example.com",
       "domain_authority": 47,
       "estimated_monthly_traffic": 31000,
-      "business_type": "ford-branded dealership",
-      "locations_count": 1,
-      "primary_market": "Niagara Falls and North Buffalo",
-      "content_focus": [
-        "ford f-150 inventory and trims guide",
-        "mustang mach-e dedicated landing page",
-        "ford service specials and coupons",
-        "ford parts department",
-        "about / team page"
-      ],
       "known_strengths": [
         "direct Ford competitor with brand alignment",
         "dedicated Mach-E landing page with specs",
@@ -283,26 +260,13 @@
         "no content about Ford commercial vehicles (Transit, E-Transit)",
         "no trade-in appraisal tool",
         "no blog or educational content"
-      ],
-      "google_review_rating": 4.1,
-      "google_review_count": 340,
-      "top_pages_by_traffic": ["/new/f-150", "/mach-e", "/service-specials", "/parts"]
+      ]
     },
     {
       "name": "Queenston Chevrolet Niagara Falls",
       "domain": "queenstonchevy.example.com",
       "domain_authority": 41,
       "estimated_monthly_traffic": 28000,
-      "business_type": "chevrolet-branded dealership",
-      "locations_count": 1,
-      "primary_market": "Niagara Falls, NY",
-      "content_focus": [
-        "new chevrolet inventory (Silverado, Equinox, Tahoe)",
-        "certified pre-owned inventory",
-        "service center with online scheduling",
-        "parts and accessories",
-        "special offers and financing"
-      ],
       "known_strengths": [
         "strong local presence in Niagara Falls",
         "CPO inventory with vehicle history reports included",
@@ -313,24 +277,13 @@
         "no EV content even though Chevy sells Blazer EV and Silverado EV",
         "mobile site is slow",
         "no video walkarounds or virtual tours"
-      ],
-      "google_review_rating": 4.0,
-      "google_review_count": 580,
-      "top_pages_by_traffic": ["/certified-pre-owned", "/service", "/new-inventory", "/specials"]
+      ]
     },
     {
       "name": "Niagara Auto Sales",
       "domain": "niagaraautosales.example.com",
       "domain_authority": 34,
       "estimated_monthly_traffic": 12000,
-      "business_type": "independent used car dealer",
-      "locations_count": 1,
-      "primary_market": "Niagara Falls, NY",
-      "content_focus": [
-        "used cars",
-        "buy here pay here financing",
-        "in-house credit approval"
-      ],
       "known_strengths": [
         "targets subprime / bad credit buyers specifically",
         "simple website with clear call-to-action"
@@ -342,10 +295,7 @@
         "no new vehicles",
         "no educational or FAQ content",
         "website appears unmaintained"
-      ],
-      "google_review_rating": 3.8,
-      "google_review_count": 120,
-      "top_pages_by_traffic": ["/inventory", "/financing", "/apply"]
+      ]
     }
   ],
   "competitor_landscape_summary": {
