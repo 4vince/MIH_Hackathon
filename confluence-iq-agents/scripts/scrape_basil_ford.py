@@ -280,33 +280,32 @@ def _write_page(target_dir: pathlib.Path, slug: str, content: str) -> None:
     print(f"      -> {path.name}")
 
 
-# ── Generate fallback page when site is blocked ───────────────────────────────
-
-
-# def _generate_fallback(_site_key: str, site: dict, slug: str) -> str:
- #   """Return pre-written realistic dealership page content for *slug*."""
-  #  pages = FALLBACK_PAGES.get(slug, {})
-   # if _site_key in pages:
-    #    return pages[_site_key]
-
-    # Generic fallback for any undiscovered page path
-   # base = site["base_url"]
-    #return f"""{slug.replace('-', ' ').title()} — {site['label']}
-
-# Visit {base} for more information about this page.
-# {site['label']} is a Ford dealership serving the {site['location']} area.
-# Contact the dealership directly for details about {slug.replace('-', ' ')}.
-#""" 
-
-
 # ── Main ──────────────────────────────────────────────────────────────────────
+
+
+def _scrape_site(site_key: str, site: dict, target_dir: pathlib.Path) -> tuple[int, int]:
+    """Scrape every page for one site; return (live_count, skipped_count)."""
+    target_dir.mkdir(parents=True, exist_ok=True)
+    live_count = 0
+    skipped_count = 0
+
+    for slug, path in PAGE_PATHS:
+        content = _scrape_page(site_key, site, slug, path)
+        if content is None:
+            print(f"    SKIPPED (blocked): {slug}")
+            skipped_count += 1
+            continue
+
+        live_count += 1
+        _write_page(target_dir, slug, content)
+
+    return live_count, skipped_count
 
 
 def scrape() -> None:
     print(f"Basil Ford Pre-Scrape Tool — {datetime.now():%Y-%m-%d %H:%M}")
     print(f"Output directory: {DATA_DIR}")
 
-    # Report available backends
     backends = []
     if _check_playwright():
         backends.append("Playwright (Chromium)")
@@ -325,41 +324,24 @@ def scrape() -> None:
     print(f"Available backends: {', '.join(backends)}\n")
 
     total_live = 0
-    total_fallback = 0
+    total_skipped = 0
     total_pages = len(PAGE_PATHS) * len(SITES)
 
     for site_key, site in SITES.items():
         target_dir = DATA_DIR / site_key
-        target_dir.mkdir(parents=True, exist_ok=True)
-
         label = site["label"]
         print(f"\n{'='*60}")
         print(f"  {label}  ({site['location']})")
         print(f"{'='*60}")
 
-        live_count = 0
-        fallback_count = 0
+        live_count, skipped_count = _scrape_site(site_key, site, target_dir)
 
-        for slug, path in PAGE_PATHS:
-            content = _scrape_page(site_key, site, slug, path)
-            if content is None:
-                print(f"    Using fallback for: {slug}")
-                content = _generate_fallback(site_key, site, slug)
-                fallback_count += 1
-            else:
-                live_count += 1
-
-            _write_page(target_dir, slug, content)
-
-        summary = (
-            f"\n  {label}: {live_count} live, {fallback_count} fallback"
-        )
-        print(summary)
+        print(f"\n  {label}: {live_count} live, {skipped_count} skipped")
         total_live += live_count
-        total_fallback += fallback_count
+        total_skipped += skipped_count
 
     print(f"\n{'='*60}")
-    print(f"  Done — {total_live} live, {total_fallback} fallback of {total_pages} total")
+    print(f"  Done — {total_live} live, {total_skipped} skipped of {total_pages} total")
     print(f"  Output: {DATA_DIR}")
     print(f"{'='*60}\n")
 

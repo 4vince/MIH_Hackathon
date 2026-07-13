@@ -1,3 +1,5 @@
+> **Superseded** — see `../../documentation/2026-07-11-confluence-iq-methodology-design.md` and `../../documentation/2026-07-11-confluence-iq-implementation-plan.md` at the repo root for the finalized, executed design. This file is kept for historical context only.
+
 # Plan: Confluence IQ Agents — Multi-Agent Orchestra (Challenge 2)
 
 ## Context
