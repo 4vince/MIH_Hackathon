@@ -1,8 +1,18 @@
 # Confluence IQ Agents Implementation Plan
 
+> **Status (2026-07-13): COMPLETE.** All 15 tasks below were executed via `superpowers:subagent-driven-development`, each with an independent task-level review, plus a final whole-branch review. Merged into `main`. The checkboxes below are left unchecked as originally written (historical record of the plan as authored on 2026-07-11) — treat this file as "what was planned," not "current status"; see `documentation/2026-07-13-confluence-iq-methodology-design.md` for the as-implemented architecture.
+>
+> **4 unplanned additions surfaced during execution, not in the task list below:**
+> - **Task 11.5** (before Task 12): `call_llm()` needed a retry-with-correction loop — live testing found `qwen3.5:397b-cloud` doesn't always conform to Ollama's `format` schema constraint on the first attempt.
+> - **Task 12.5** (after Task 12's review): the verifier didn't check `unanswered_buyer_questions` for grounding, and `call_llm`'s retries weren't logged — both closed.
+> - **Task 16** (after the final whole-branch review): the verifier only checked Agent 3's output, not Agent 1/2's own numbers — added `verify_agent1_output`/`verify_agent2_output` so all three agents' output is grounded, not just the last one.
+> - **Task 17** (after the final whole-branch review): `run.py` had no error handling around the live LLM call — added a broad `try/except` at that single outermost boundary so a live failure degrades cleanly instead of crashing.
+>
+> Full task-by-task ledger with review outcomes: `confluence-iq-agents/.superpowers/sdd/progress.md` (git-ignored; reconstruct from `git log` if ever lost).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Turn the `confluence-iq-agents` skeleton into a working Challenge 2 submission that passes all three PRD acceptance criteria, per the finalized design in `documentation/2026-07-11-confluence-iq-methodology-design.md`.
+**Goal:** Turn the `confluence-iq-agents` skeleton into a working Challenge 2 submission that passes all three PRD acceptance criteria, per the finalized design in `documentation/2026-07-13-confluence-iq-methodology-design.md`.
 
 **Architecture:** LangGraph `StateGraph` with 5 nodes: `data_synthesizer` and `competitor_analyst` (parallel) → `content_strategist` → `verify` (deterministic claim-checking, no LLM) → `report_writer`. Each agent calls the internal Ollama-backed endpoint via a shared `httpx`-based `call_llm()` helper.
 
@@ -1773,7 +1783,7 @@ git commit -m "fix: remove dead _generate_fallback reference; skip blocked pages
 At the very top of `confluence-iq-agents/docs/implementation-plan.md`, add:
 
 ```markdown
-> **Superseded** — see `../../documentation/2026-07-11-confluence-iq-methodology-design.md` and `../../documentation/2026-07-11-confluence-iq-implementation-plan.md` at the repo root for the finalized, executed design. This file is kept for historical context only.
+> **Superseded** — see `../../documentation/2026-07-13-confluence-iq-methodology-design.md` and `../../documentation/2026-07-13-confluence-iq-implementation-plan.md` at the repo root for the finalized, executed design. This file is kept for historical context only.
 
 ```
 
@@ -1784,7 +1794,7 @@ At the very top of `confluence-iq-agents/docs/implementation-plan.md`, add:
 At the very top of `confluence-iq-agents/docs/architecture.md`, add:
 
 ```markdown
-> **Note:** this diagram predates the `verify` and `report_writer` nodes added in the finalized implementation. See `../../documentation/2026-07-11-confluence-iq-methodology-design.md` for the current 5-node architecture (data_synthesizer + competitor_analyst → content_strategist → verify → report_writer).
+> **Note:** this diagram predates the `verify` and `report_writer` nodes added in the finalized implementation. See `../../documentation/2026-07-13-confluence-iq-methodology-design.md` for the current 7-node architecture (data_synthesizer + competitor_analyst → verify_agent1 + verify_agent2 → content_strategist → verify → report_writer).
 
 ```
 

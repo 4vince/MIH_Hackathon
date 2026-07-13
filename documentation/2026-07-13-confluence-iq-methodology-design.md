@@ -2,6 +2,10 @@
 
 **Status:** Approved 2026-07-11. Supersedes the draft methodology notes and reconciles them with the official PRD (`mih_hackathon_guide_PRDs.md`) and the `api.iamtzar.com` endpoint's confirmed contract.
 
+**Implementation update (2026-07-13):** All 15 planned tasks are complete, plus 4 unplanned hardening additions discovered via live testing against the real endpoint and a whole-branch code review — all merged into `main`. The design below is accurate except where noted inline; the two biggest deltas from what was originally planned:
+- The graph grew from 5 nodes to 7: Agent 1 and Agent 2's own output is now independently verified against source data *before* Agent 3 ever sees it (not just Agent 3's synthesis) — see "Architecture" and "Verifier" below.
+- `call_llm()` retries with a corrective prompt when the model's response doesn't conform to the requested JSON schema (confirmed live: `qwen3.5:397b-cloud` does not always honor Ollama's `format` constraint on the first attempt), and `run.py` now catches and logs any pipeline failure cleanly instead of crashing with a raw traceback during a live run.
+
 **Goal:** Turn the existing `confluence-iq-agents` skeleton (LangGraph wiring + stub agents) into a working submission for Challenge 2 — The Multi-Agent Orchestra — that passes all three acceptance criteria in the PRD.
 
 ## Global constraints (from the PRD)
@@ -51,39 +55,50 @@
 
 ## Architecture
 
+**As implemented (2026-07-13) — 7 nodes, not the 5 originally planned below.** Agent 1 and Agent 2's own output is now independently grounded against source data before Agent 3 ever synthesizes from it, closing a gap a whole-branch review found: originally only Agent 3's output was verified, so a fabricated SEO number or key insight from Agent 1/2 would have reached the report unchecked.
+
 ```
 python run.py
       │
       ▼
 ┌─────────────┐
-│ StateGraph   │  (LangGraph — unchanged shape from today)
+│ StateGraph   │  (LangGraph)
 └──────┬───────┘
        │
    ┌───┴────────────┐
    ▼                ▼
-Agent 1          Agent 2         ← parallel (existing edges)
+Agent 1          Agent 2         ← parallel
 Data             Competitor
 Synthesizer      Analyst
    │                │
+   ▼                ▼
+Verifier         Verifier         ← new: grounds each agent's own output
+(Agent 1)        (Agent 2)          against raw source data (key_insights;
+   │                │               keyword_opportunities/competitor_weaknesses/
+   │                │               observed_content_gaps) before Agent 3 sees it
    └───────┬────────┘
            ▼
        Agent 3
        Content Strategist
-       (reads state["agent1_output"] / state["agent2_output"] — currently broken, must be fixed)
+       (reads state["agent1_output"] / state["agent2_output"] — now genuinely consumed)
            ▼
-       Verifier (deterministic, no LLM)
-       — extracts claims (ContentGap.evidence, Opportunity.rationale) from Agent 3's draft
-       — fuzzy-matches each against source corpus (Agent1/2 output + raw JSON/text files)
+       Verifier (Agent 3, deterministic, no LLM)
+       — extracts claims (unanswered_buyer_questions, ContentGap.evidence, Opportunity.rationale)
+       — fuzzy-matches each against source corpus (already-verified Agent1/2 output + raw JSON/text files)
        — strips unsourced claims, collects them as flagged_claims
            ▼
        Report Writer
        — writes output/report_<timestamp>.md
-       — includes "⚠ Flagged Claims (Unverified)" section only if verifier caught something
+       — includes "⚠ Flagged Claims (Unverified)" section only if any verifier caught something
            ▼
    output/report_<timestamp>.md + output/transcript.log
 ```
 
 Each of the 3 agent nodes calls the LLM via a shared `call_llm(system_prompt, user_content, model, output_schema)` helper built on plain `httpx`, hitting `POST https://api.iamtzar.com/api/chat`, model `qwen3.5:397b-cloud` for all three agents (per the PRD's model table — best general-quality model available; Agent 3 is the judged deliverable, so it isn't downgraded for latency).
+
+**Retry-with-correction (added 2026-07-13):** live testing confirmed `qwen3.5:397b-cloud` does not always honor Ollama's `format` JSON-schema constraint on the first attempt. `call_llm()` now re-prompts (up to 2 retries) with the validation error and the restated schema before giving up; a real live run confirmed this recovers genuine schema-drift failures, not just in mocked tests.
+
+**Pipeline-level error handling (added 2026-07-13):** `run.py`'s `main()` wraps the graph build+invoke in a deliberately broad `try/except`, since it's the pipeline's single outermost live-network boundary — any failure (a slow/unreachable endpoint, exhausted schema retries, anything else) now logs cleanly and exits instead of crashing with a raw traceback during a live demo. Full detail is still preserved in `transcript.log`.
 
 **Considered and rejected:** `tzar:3.5` (a local 4.3B Gemma3-based fine-tune, PRD-labeled "Custom TzarAI Voice") as a swap-in for all three agents. Rejected because it's ~90x smaller than `qwen3.5:397b-cloud` with real quality risk for the judged content-gap/prioritization reasoning, and the reliability concern that motivated considering it (external cloud round-trip for `qwen3.5:397b-cloud`) wasn't observed in practice — a live test against it succeeded in ~1.2s. Reserved as a documented fallback only if real rate-limiting/latency problems surface during Saturday/Sunday build.
 
@@ -141,10 +156,15 @@ Dual-output Python `logging`, hierarchical loggers per agent (`confluence_iq.age
 
 ## Verifier — claim-level fact-checking
 
-1. Build one combined source corpus: `Agent1Output` + `Agent2Output` (serialized) + raw `mock_customer_data.json` + `mock_seo_trends.json` + all `site_text/*.txt`.
-2. For each `ContentGap.evidence` and `Opportunity.rationale` string, fuzzy-match against that corpus (`difflib.SequenceMatcher` or keyword-overlap, deterministic — no LLM call).
-3. Anything below the match threshold is stripped from the report body and collected into `flagged_claims: list[str]`.
-4. Pipeline always completes; the report includes a `## ⚠ Flagged Claims (Unverified)` section only when something was caught.
+Implemented as deterministic keyword-overlap (`claim_is_grounded()`: tokenize, drop stopwords/short tokens, require ≥60% of a claim's significant words to appear in the corpus) rather than `difflib` fuzzy-matching — simpler, and the 0.6 threshold was hand-verified against real fabricated-vs-grounded examples during implementation.
+
+**Now applied at three points (added 2026-07-13; originally only step 3 below existed):**
+
+1. **`verify_agent1_output`** — checks Agent 1's `key_insights` against the raw source corpus (`mock_customer_data.json` + `mock_seo_trends.json` + `site_text/*.txt`) before Agent 3 runs.
+2. **`verify_agent2_output`** — checks Agent 2's `keyword_opportunities` (term + volume + difficulty), `competitor_weaknesses`, and `observed_content_gaps` against the same raw corpus — this is the layer that actually catches a fabricated SEO number or invented competitor weakness, which the original single-verifier design would have missed entirely.
+3. **`verify_agent3_output`** — checks `unanswered_buyer_questions`, `ContentGap.evidence`, and `Opportunity.rationale` against Agent 1/2's (now pre-verified) output + the raw corpus — unchanged in design from the original plan, just now sitting on top of a grounded foundation instead of an unverified one.
+
+Each of the three strips whatever fails the threshold from its respective output and collects the removed items into that stage's own `flagged_claims` list; `report_writer` merges all three lists before rendering the report. Pipeline always completes — nothing failing a check blocks the run, it's stripped and flagged instead. The report includes a `## ⚠ Flagged Claims (Unverified)` section only when something was caught anywhere in the chain.
 
 ## Report structure
 

@@ -1,4 +1,4 @@
-> **Note:** this diagram predates the `verify` and `report_writer` nodes added in the finalized implementation. See `../../documentation/2026-07-11-confluence-iq-methodology-design.md` for the current 5-node architecture (data_synthesizer + competitor_analyst → content_strategist → verify → report_writer).
+> **Note:** this diagram predates the `verify_agent1`, `verify_agent2`, `verify`, and `report_writer` nodes added in the finalized implementation. See `../../documentation/2026-07-13-confluence-iq-methodology-design.md` for the current 7-node architecture (data_synthesizer + competitor_analyst → verify_agent1 + verify_agent2 → content_strategist → verify → report_writer).
 
 # Architecture
 
