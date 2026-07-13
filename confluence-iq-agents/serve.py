@@ -5,6 +5,7 @@ Usage:
     # Open http://localhost:8000
 """
 
+import json
 import pathlib
 import sys
 import threading
@@ -56,7 +57,7 @@ async def _dashboard() -> HTMLResponse:
 async def _events():
     async def event_generator():
         async for event in event_bus.subscribe():
-            yield {"event": "message", "data": event}
+            yield {"event": "message", "data": json.dumps(event)}
 
     return EventSourceResponse(event_generator())
 

@@ -106,8 +106,22 @@ def build_graph(event_bus: Optional[EventBus] = None) -> StateGraph:
         ("report_writer", report_node),
     ]
 
+    # ── Pipeline edges (used for both wiring and event bus) ────────────────
+    EDGES: list[tuple[str, str]] = [
+        ("data_synthesizer", "verify_agent1"),
+        ("competitor_analyst", "verify_agent2"),
+        ("verify_agent1", "content_strategist"),
+        ("verify_agent2", "content_strategist"),
+        ("content_strategist", "verify"),
+        ("verify", "report_writer"),
+    ]
+
     # ── Optionally wrap each node with EventBus instrumentation ────────────
     if event_bus is not None:
+
+        _OUTGOING: dict[str, list[str]] = {}
+        for src, dst in EDGES:
+            _OUTGOING.setdefault(src, []).append(dst)
 
         def _wrap(name: str, fn: Callable) -> Callable:
             def wrapped(state: AgentState) -> dict:
@@ -117,6 +131,14 @@ def build_graph(event_bus: Optional[EventBus] = None) -> StateGraph:
                     result = fn(state)
                     summary = _summarise_output(name, result)
                     event_bus.publish("node_end", node=name, summary=summary)
+                    # Publish edge_traverse for each outgoing edge
+                    for dst in _OUTGOING.get(name, []):
+                        event_bus.publish(
+                            "edge_traverse",
+                            from_node=name,
+                            to_node=dst,
+                            data_passed=summary,
+                        )
                     return result
                 except Exception as exc:
                     event_bus.publish("node_end", node=name, error=str(exc))
@@ -129,15 +151,11 @@ def build_graph(event_bus: Optional[EventBus] = None) -> StateGraph:
     for name, fn in nodes:
         builder.add_node(name, fn)
 
-    # ── Edges (unchanged) ──────────────────────────────────────────────────
+    # ── Edges ───────────────────────────────────────────────────────────────
     builder.add_edge(START, "data_synthesizer")
     builder.add_edge(START, "competitor_analyst")   # parallel with agent 1
-    builder.add_edge("data_synthesizer", "verify_agent1")
-    builder.add_edge("competitor_analyst", "verify_agent2")
-    builder.add_edge("verify_agent1", "content_strategist")
-    builder.add_edge("verify_agent2", "content_strategist")
-    builder.add_edge("content_strategist", "verify")
-    builder.add_edge("verify", "report_writer")
+    for src, dst in EDGES:
+        builder.add_edge(src, dst)
     builder.add_edge("report_writer", END)
 
     return builder.compile()
