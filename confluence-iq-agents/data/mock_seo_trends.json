@@ -240,10 +240,7 @@
         "not Ford-specific — covers too many brands for deep expertise",
         "no dedicated EV FAQ or charging information section",
         "commercial/fleet page is generic with no Transit or E-Transit content"
-      ],
-      "google_review_rating": 4.3,
-      "google_review_count": 5200,
-      "top_pages_by_traffic": ["/used-inventory", "/service-appointment", "/value-your-trade", "/new-inventory"]
+      ]
     },
     {
       "name": "Niagara Frontier Ford",
@@ -263,10 +260,7 @@
         "no content about Ford commercial vehicles (Transit, E-Transit)",
         "no trade-in appraisal tool",
         "no blog or educational content"
-      ],
-      "google_review_rating": 4.1,
-      "google_review_count": 340,
-      "top_pages_by_traffic": ["/new/f-150", "/mach-e", "/service-specials", "/parts"]
+      ]
     },
     {
       "name": "Queenston Chevrolet Niagara Falls",
@@ -283,10 +277,7 @@
         "no EV content even though Chevy sells Blazer EV and Silverado EV",
         "mobile site is slow",
         "no video walkarounds or virtual tours"
-      ],
-      "google_review_rating": 4.0,
-      "google_review_count": 580,
-      "top_pages_by_traffic": ["/certified-pre-owned", "/service", "/new-inventory", "/specials"]
+      ]
     },
     {
       "name": "Niagara Auto Sales",
@@ -304,10 +295,7 @@
         "no new vehicles",
         "no educational or FAQ content",
         "website appears unmaintained"
-      ],
-      "google_review_rating": 3.8,
-      "google_review_count": 120,
-      "top_pages_by_traffic": ["/inventory", "/financing", "/apply"]
+      ]
     }
   ],
   "competitor_landscape_summary": {
