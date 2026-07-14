@@ -5,7 +5,7 @@ import logging
 import httpx
 from pydantic import BaseModel, ValidationError
 
-from .config import LLM_BASE_URL, LLM_MODEL
+from .config import LLM_BASE_URL, LLM_MODEL, LLM_TIMEOUT_SECONDS
 
 logger = logging.getLogger("confluence_iq.llm_client")
 
@@ -21,7 +21,10 @@ def call_llm(
 
     Retries with a corrective follow-up message if the response doesn't
     conform to output_schema — Ollama's `format` constraint is not always
-    strictly enforced by the model in practice.
+    strictly enforced by the model in practice. Separately, a request that
+    times out (richer prompts can push this slow model past the timeout) is
+    retried as-is up to max_retries times, since a timeout isn't a content
+    problem a corrective message can fix.
     """
     messages = [
         {"role": "system", "content": system_prompt},
@@ -30,16 +33,30 @@ def call_llm(
     last_error: ValidationError | None = None
 
     for attempt in range(max_retries + 1):
-        response = httpx.post(
-            f"{LLM_BASE_URL}/api/chat",
-            json={
-                "model": model,
-                "messages": messages,
-                "stream": False,
-                "format": output_schema.model_json_schema(),
-            },
-            timeout=120.0,
-        )
+        for timeout_attempt in range(max_retries + 1):
+            try:
+                response = httpx.post(
+                    f"{LLM_BASE_URL}/api/chat",
+                    json={
+                        "model": model,
+                        "messages": messages,
+                        "stream": False,
+                        "format": output_schema.model_json_schema(),
+                    },
+                    timeout=LLM_TIMEOUT_SECONDS,
+                )
+                break
+            except httpx.TimeoutException as exc:
+                if timeout_attempt == max_retries:
+                    logger.warning(
+                        "call_llm: request timed out on final attempt (%d/%d): %s",
+                        timeout_attempt + 1, max_retries + 1, exc,
+                    )
+                    raise
+                logger.warning(
+                    "call_llm: request timed out on attempt %d/%d, retrying: %s",
+                    timeout_attempt + 1, max_retries + 1, exc,
+                )
         response.raise_for_status()
         data = response.json()
         message = data["message"]

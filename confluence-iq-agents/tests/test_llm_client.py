@@ -3,9 +3,11 @@
 import logging
 from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
 from pydantic import ValidationError
 
+from confluence_iq.config import LLM_TIMEOUT_SECONDS
 from confluence_iq.llm_client import call_llm
 from confluence_iq.schemas import Agent1Output, CustomerSegment
 
@@ -187,3 +189,74 @@ def test_call_llm_logs_warning_on_schema_validation_retry(mock_post, caplog):
         call_llm(system_prompt="sys", user_content="usr", output_schema=Agent1Output)
 
     assert any("retrying with correction" in record.message.lower() for record in caplog.records)
+
+
+@patch("confluence_iq.llm_client.httpx.post")
+def test_call_llm_uses_configurable_timeout_from_config(mock_post):
+    fake_output = _fake_agent1_output()
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "message": {"role": "assistant", "content": fake_output.model_dump_json(), "thinking": ""},
+        "done": True,
+    }
+    mock_response.raise_for_status.return_value = None
+    mock_post.return_value = mock_response
+
+    call_llm(system_prompt="sys", user_content="usr", output_schema=Agent1Output)
+
+    assert mock_post.call_args[1]["timeout"] == LLM_TIMEOUT_SECONDS
+
+
+@patch("confluence_iq.llm_client.httpx.post")
+def test_call_llm_retries_on_read_timeout_and_succeeds(mock_post):
+    fake_output = _fake_agent1_output()
+    valid_response = MagicMock()
+    valid_response.json.return_value = {
+        "message": {"role": "assistant", "content": fake_output.model_dump_json(), "thinking": ""},
+        "done": True,
+    }
+    valid_response.raise_for_status.return_value = None
+
+    mock_post.side_effect = [httpx.ReadTimeout("timed out"), valid_response]
+
+    output, thinking = call_llm(
+        system_prompt="system prompt",
+        user_content="user content",
+        output_schema=Agent1Output,
+    )
+
+    assert output.business_name == "Basil Ford"
+    assert mock_post.call_count == 2
+
+
+@patch("confluence_iq.llm_client.httpx.post")
+def test_call_llm_raises_after_exhausting_timeout_retries(mock_post):
+    mock_post.side_effect = httpx.ReadTimeout("timed out")
+
+    with pytest.raises(httpx.TimeoutException):
+        call_llm(
+            system_prompt="system prompt",
+            user_content="user content",
+            output_schema=Agent1Output,
+            max_retries=2,
+        )
+
+    assert mock_post.call_count == 3
+
+
+@patch("confluence_iq.llm_client.httpx.post")
+def test_call_llm_logs_warning_on_timeout_retry(mock_post, caplog):
+    fake_output = _fake_agent1_output()
+    valid_response = MagicMock()
+    valid_response.json.return_value = {
+        "message": {"role": "assistant", "content": fake_output.model_dump_json(), "thinking": ""},
+        "done": True,
+    }
+    valid_response.raise_for_status.return_value = None
+
+    mock_post.side_effect = [httpx.ReadTimeout("timed out"), valid_response]
+
+    with caplog.at_level(logging.WARNING, logger="confluence_iq.llm_client"):
+        call_llm(system_prompt="sys", user_content="usr", output_schema=Agent1Output)
+
+    assert any("timed out" in record.message.lower() or "timeout" in record.message.lower() for record in caplog.records)
