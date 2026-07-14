@@ -510,6 +510,218 @@
   .rank-badge.r2 { background: #94a3b8; color: #0f172a; }
   .rank-badge.r3 { background: #78350f; }
   .rank-badge.r4 { background: #334155; }
+
+  /* ── History Panel ─────────────────────────────────────────── */
+  .history-panel {
+    display: none;
+    margin: 0 2rem 1rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .history-panel.visible { display: block; }
+  .history-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1.2rem;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .history-header:hover { background: #1f3147; }
+  .history-header h3 { font-size: 0.8rem; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 0.4rem; }
+  .history-count {
+    background: #334155;
+    color: #64748b;
+    font-size: 0.65rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .history-count.has-entries { color: #94a3b8; background: #475569; }
+  .history-header .collapse-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    display: inline-block;
+    margin-left: auto;
+    color: #64748b;
+  }
+  .history-header .collapse-arrow.collapsed { transform: rotate(-90deg); }
+  .history-body { padding: 0.8rem 1.2rem; }
+  .history-body.collapsed { display: none; }
+
+  /* ── Trend Charts (sparklines) ─────────────────────────────── */
+  .trend-charts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #1e293b;
+  }
+  .trend-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    flex: 1 0 90px;
+    min-width: 90px;
+  }
+  .trend-item .trend-label {
+    font-size: 0.6rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .trend-item .trend-value {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+  .trend-item svg { display: block; }
+
+  /* ── Report List ───────────────────────────────────────────── */
+  .history-list { max-height: 260px; overflow-y: auto; }
+  .history-list::-webkit-scrollbar { width: 5px; }
+  .history-list::-webkit-scrollbar-track { background: #0f172a; }
+  .history-list::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 0.78rem;
+  }
+  .history-item:hover { background: #1f3147; }
+  .history-item.active { background: rgba(34,211,238,0.08); }
+  .history-item input[type="checkbox"] {
+    accent-color: #22d3ee;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .history-item .item-date { color: #94a3b8; min-width: 8em; }
+  .history-item .item-name { color: #e2e8f0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-item .item-stats {
+    display: flex;
+    gap: 0.4rem;
+    font-size: 0.65rem;
+    color: #64748b;
+    flex-shrink: 0;
+  }
+  .history-item .item-stats span { background: #0f172a; padding: 0.05rem 0.35rem; border-radius: 3px; }
+  .history-item .item-current { color: #22d3ee; font-size: 0.6rem; font-weight: 600; }
+
+  .compare-btn {
+    display: none;
+    width: 100%;
+    margin-top: 0.6rem;
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    padding: 0.45rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .compare-btn.enabled { display: block; }
+  .compare-btn:hover { background: #2563eb; }
+  .compare-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Comparison Overlay ────────────────────────────────────── */
+  .comparison-content { font-size: 0.85rem; }
+  .comparison-content h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 1.2em 0 0.5em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .comparison-content h3:first-child { margin-top: 0; }
+  .comp-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin: 0.5rem 0 1rem;
+    padding: 0.6rem 0.8rem;
+    background: #0f172a;
+    border-radius: 8px;
+    font-size: 0.75rem;
+  }
+  .comp-meta .comp-date { color: #94a3b8; }
+  .comp-meta .comp-date strong { color: #e2e8f0; }
+
+  /* Metric comparison grid */
+  .comp-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .comp-metric {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    text-align: center;
+  }
+  .comp-metric .cm-label { font-size: 0.65rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; }
+  .comp-metric .cm-values { display: flex; align-items: center; justify-content: center; gap: 0.3rem; margin-top: 0.15rem; }
+  .comp-metric .cm-old, .comp-metric .cm-new { font-size: 1rem; font-weight: 700; }
+  .comp-metric .cm-old { color: #64748b; }
+  .comp-metric .cm-new { color: #e2e8f0; }
+  .comp-metric .cm-arrow { font-size: 0.85rem; }
+  .comp-metric .cm-delta { font-size: 0.7rem; font-weight: 600; border-radius: 4px; padding: 0 0.3rem; }
+  .comp-metric .cm-delta.up { color: #4ade80; }
+  .comp-metric .cm-delta.down { color: #f87171; }
+  .comp-metric .cm-delta.same { color: #64748b; }
+
+  /* Diff sections */
+  .diff-section { margin-bottom: 1rem; }
+  .diff-empty { color: #64748b; font-style: italic; padding: 0.5rem; text-align: center; }
+  .diff-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    margin: 0.15rem 0;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+  .diff-item .diff-marker {
+    flex-shrink: 0;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    margin-top: 0.1rem;
+  }
+  .diff-item.added { background: rgba(74,222,128,0.06); }
+  .diff-item.added .diff-marker { background: #166534; color: #4ade80; }
+  .diff-item.removed { background: rgba(248,113,113,0.06); }
+  .diff-item.removed .diff-marker { background: #7f1d1d; color: #fca5a5; }
+  .diff-item.changed { background: rgba(251,191,36,0.06); }
+  .diff-item.changed .diff-marker { background: #713f12; color: #fde68a; }
+  .diff-item .diff-text { color: #cbd5e1; flex: 1; }
+  .diff-item .diff-sev { margin-left: 0.3rem; }
+  .diff-item .diff-detail { font-size: 0.7rem; color: #64748b; display: block; margin-top: 0.1rem; }
+  .no-compare-note { color: #64748b; text-align: center; padding: 2rem; font-size: 0.85rem; }
 </style>
 </head>
 <body>
@@ -644,6 +856,22 @@
     </div>
   </div>
 
+  <!-- ═══ Report History ═════════════════════════════════════ -->
+  <div class="history-panel" id="historyPanel">
+    <div class="history-header" id="historyHeader">
+      <h3>📚 Report History</h3>
+      <span class="history-count" id="historyCount">0</span>
+      <span class="collapse-arrow" id="historyCollapseArrow">▼</span>
+    </div>
+    <div class="history-body" id="historyBody">
+      <div class="trend-charts" id="trendCharts">
+        <div class="trend-item"><span class="trend-label">Loading…</span></div>
+      </div>
+      <div class="history-list" id="historyList"></div>
+      <button class="compare-btn" id="compareBtn" disabled>📊 Compare Selected</button>
+    </div>
+  </div>
+
   <!-- ═══ Event Log ══════════════════════════════════════════ -->
   <div class="event-log-container">
     <div class="event-log-header" id="logHeader">
@@ -668,6 +896,19 @@
         <a class="download-btn" id="downloadBtn" download="report.md">⬇ Download .md</a>
       </div>
       <div class="report-body" id="reportContent"></div>
+    </div>
+  </div>
+
+  <!-- ═══ Comparison Overlay ══════════════════════════════════ -->
+  <div class="report-overlay" id="compareOverlay">
+    <div class="report-panel">
+      <button class="report-close" id="compareClose">✕</button>
+      <div class="report-header">
+        <h2>📊 Report Comparison</h2>
+      </div>
+      <div class="comparison-content" id="comparisonContent">
+        <div class="no-compare-note">Select two reports from the history panel and click Compare.</div>
+      </div>
     </div>
   </div>
 
@@ -1277,6 +1518,8 @@
         if (btn) btn.disabled = false;
         // Show summary panel
         document.getElementById('summaryPanel').classList.add('visible');
+        // Refresh history to include the new report
+        setTimeout(fetchReportHistory, 1500);
         // Auto-show the report overlay
         const overlay = document.getElementById('reportOverlay');
         if (overlay && !overlay.classList.contains('open')) {
@@ -1402,6 +1645,633 @@
   $$('.card').forEach(c => {
     c.style.opacity = '0';
   });
+
+  // ═════════════════════════════════════════════════════════════
+  // ── Report History, Comparison, and Trend Tracking ──────────
+  // ═════════════════════════════════════════════════════════════
+
+  let allReports = [];           // cached from /api/reports
+  let reportDataCache = {};      // filename → {renderedHtml, rawMd}
+
+  // ── Fetch metric sparkline data from all reports ─────────────
+  async function fetchReportHistory() {
+    try {
+      const res = await fetch('/api/reports');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      allReports = await res.json();
+    } catch (e) {
+      log('warn', `History unavailable: ${e.message}`);
+      allReports = [];
+    }
+
+    // Make the history panel visible
+    const panel = document.getElementById('historyPanel');
+    if (panel) panel.classList.add('visible');
+
+    // Pre-load content for reports that lack metrics (fetch in parallel)
+    const needMetrics = allReports.filter(r => !r.metrics || Object.keys(r.metrics).length === 0);
+    if (needMetrics.length) {
+      await Promise.all(needMetrics.map(async (r) => {
+        try {
+          const resp = await fetch(`/api/report/${r.filename}`);
+          const text = await resp.text();
+          // Extract basic metrics from raw markdown
+          const m = {};
+
+          // Match "covering X customer segment(s)"
+          let match;
+          if ((match = text.match(/covering\s+(\d+)\s+customer segment/))) m.segments = parseInt(match[1]);
+          if ((match = text.match(/(\d+)\s+keyword opportunit/))) m.keywords = parseInt(match[1]);
+          if ((match = text.match(/(\d+)\s+content gap/))) m.gaps = parseInt(match[1]);
+          if ((match = text.match(/(\d+)\s+prioritized recommendation/))) m.recommendations = parseInt(match[1]);
+
+          r.metrics = m;
+          // Also cache the rendered version
+          reportDataCache[r.filename] = { rawMd: text, renderedHtml: renderMarkdown(text) };
+        } catch (_) { /* skip */ }
+      }));
+    }
+
+    renderHistoryPanel();
+    renderTrendCharts();
+  }
+
+  // ── Render the full history panel ─────────────────────────────
+  function renderHistoryPanel() {
+    const listEl = document.getElementById('historyList');
+    const countEl = document.getElementById('historyCount');
+    if (!listEl) return;
+
+    countEl.textContent = allReports.length;
+    if (allReports.length) countEl.classList.add('has-entries');
+
+    if (!allReports.length) {
+      listEl.innerHTML = '<div class="no-compare-note" style="padding:0.5rem">No reports yet.</div>';
+      return;
+    }
+
+    let html = '';
+    allReports.forEach((r, idx) => {
+      const date = new Date(r.modified).toLocaleDateString('en-US', {
+        month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
+      });
+      const m = r.metrics || {};
+      const stats = [];
+      if (m.segments) stats.push(`👤${m.segments}`);
+      if (m.keywords) stats.push(`🔑${m.keywords}`);
+      if (m.gaps) stats.push(`🕳${m.gaps}`);
+      if (m.recommendations) stats.push(`📋${m.recommendations}`);
+      const currentLabel = idx === 0 ? ' <span class="item-current">(latest)</span>' : '';
+      html += `<label class="history-item${idx === 0 ? ' active' : ''}" data-idx="${idx}">
+        <input type="checkbox" class="report-cb" value="${r.filename}" ${idx < 2 ? 'checked' : ''}>
+        <span class="item-date">${date}</span>
+        <span class="item-name">${r.filename}${currentLabel}</span>
+        <span class="item-stats">${stats.map(s => `<span>${s}</span>`).join('')}</span>
+      </label>`;
+    });
+
+    listEl.innerHTML = html;
+
+    // Update compare button state
+    updateCompareBtn();
+
+    // Set up checkbox listeners
+    listEl.querySelectorAll('.report-cb').forEach(cb => {
+      cb.addEventListener('change', onCompareSelectionChange);
+    });
+  }
+
+  // ── Constrain checkbox selection to max 2 ─────────────────────
+  function onCompareSelectionChange() {
+    const checked = document.querySelectorAll('.report-cb:checked');
+    if (checked.length > 2) {
+      // Uncheck the one that was just checked (keep first 2)
+      checked[checked.length - 1].checked = false;
+    }
+    // Highlight selected rows
+    document.querySelectorAll('.history-item').forEach(item => {
+      const cb = item.querySelector('.report-cb');
+      item.classList.toggle('active', cb && cb.checked);
+    });
+    updateCompareBtn();
+  }
+
+  function getSelectedReports() {
+    const checked = document.querySelectorAll('.report-cb:checked');
+    return Array.from(checked).map(cb => cb.value);
+  }
+
+  function updateCompareBtn() {
+    const btn = document.getElementById('compareBtn');
+    const selected = getSelectedReports();
+    if (selected.length === 2) {
+      btn.disabled = false;
+      btn.classList.add('enabled');
+    } else {
+      btn.disabled = true;
+      btn.classList.remove('enabled');
+    }
+  }
+
+  // ── Render sparkline trend charts ─────────────────────────────
+  function renderTrendCharts() {
+    const container = document.getElementById('trendCharts');
+    if (!container) return;
+    if (allReports.length < 2) {
+      container.innerHTML = '<div class="no-compare-note" style="padding:0.2rem">More runs needed for trends.</div>';
+      return;
+    }
+
+    // Build metric series (oldest → newest for sparklines)
+    const series = { segments: [], keywords: [], gaps: [], recommendations: [] };
+    const reversed = [...allReports].reverse();
+    reversed.forEach(r => {
+      const m = r.metrics || {};
+      if (m.segments != null) series.segments.push(m.segments);
+      if (m.keywords != null) series.keywords.push(m.keywords);
+      if (m.gaps != null) series.gaps.push(m.gaps);
+      if (m.recommendations != null) series.recommendations.push(m.recommendations);
+    });
+
+    const configs = [
+      { key: 'segments', label: 'Segments', color: '#22d3ee' },
+      { key: 'keywords', label: 'Keywords', color: '#a78bfa' },
+      { key: 'gaps', label: 'Gaps', color: '#f87171' },
+      { key: 'recommendations', label: 'Recs', color: '#4ade80' },
+    ];
+
+    let html = '';
+    configs.forEach(cfg => {
+      const vals = series[cfg.key];
+      const current = vals && vals.length ? vals[vals.length - 1] : '—';
+      const svg = vals && vals.length > 1
+        ? renderSparklineSVG(vals, cfg.color)
+        : '<span style="color:#64748b;font-size:0.7rem">—</span>';
+      html += `<div class="trend-item">
+        ${svg}
+        <span class="trend-value" style="color:${cfg.color}">${current}</span>
+        <span class="trend-label">${cfg.label}</span>
+      </div>`;
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ── Render an inline SVG sparkline ────────────────────────────
+  function renderSparklineSVG(values, color) {
+    const w = 80, h = 24;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    const padding = 2;
+    const points = values.map((v, i) => {
+      const x = i / (values.length - 1) * (w - padding * 2) + padding;
+      const y = h - ((v - min) / range) * (h - padding * 2) - padding;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+      <polyline fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="${points}"/>
+      <circle cx="${points.split(' ').pop().split(',')[0]}" cy="${points.split(' ').pop().split(',')[1]}" r="2" fill="${color}"/>
+    </svg>`;
+  }
+
+  // ── Extract structured data from a report ─────────────────────
+  function extractReportData(rawMd, renderedHtml) {
+    const data = { segments: [], keywords: [], gaps: [], recommendations: [] };
+
+    // Build a DOM parser
+    const div = document.createElement('div');
+    div.innerHTML = renderedHtml;
+
+    // Extract segments (h3 under Customer Insights h2)
+    let inCustomerSection = false;
+    div.querySelectorAll('h2, h3').forEach(h => {
+      if (h.tagName === 'H2' && h.textContent.includes('Customer Insights')) {
+        inCustomerSection = true;
+        return;
+      }
+      if (h.tagName === 'H2' && !h.textContent.includes('Customer Insights')) {
+        inCustomerSection = false;
+        return;
+      }
+      if (inCustomerSection && h.tagName === 'H3') {
+        data.segments.push({ name: h.textContent.trim() });
+      }
+    });
+
+    // Extract keywords from Competitor Landscape — look for keyword lines
+    // We parse from the raw markdown for more accurate extraction
+    const kwSection = rawMd.match(/## Competitive Landscape[\s\S]*?(?=## |$)/);
+    if (kwSection) {
+      const kwRegex = /-\s+(.+?)\s*\(volume:\s*(\d+)/gi;
+      let m;
+      while ((m = kwRegex.exec(kwSection[0])) !== null) {
+        data.keywords.push({ keyword: m[1].trim(), volume: parseInt(m[2]) });
+      }
+    }
+
+    // Extract gaps from Content Gap Analysis table
+    div.querySelectorAll('h2').forEach(h => {
+      if (h.textContent.includes('Content Gap')) {
+        let next = h.nextElementSibling;
+        while (next && next.tagName !== 'H2') {
+          if (next.tagName === 'TABLE') {
+            const rows = next.querySelectorAll('tbody tr');
+            rows.forEach(r => {
+              const cells = r.querySelectorAll('td');
+              if (cells.length >= 3) {
+                data.gaps.push({
+                  gap: cells[0]?.textContent?.trim() || '',
+                  site: cells[1]?.textContent?.trim() || '',
+                  severity: cells[2]?.textContent?.trim() || '',
+                  evidence: cells[3]?.textContent?.trim() || '',
+                });
+              }
+            });
+          }
+          next = next.nextElementSibling;
+        }
+      }
+    });
+
+    // Extract recommendations from Opportunity Prioritization table
+    div.querySelectorAll('h2').forEach(h => {
+      if (h.textContent.includes('Opportunity Priorit')) {
+        let next = h.nextElementSibling;
+        while (next && next.tagName !== 'H2') {
+          if (next.tagName === 'TABLE') {
+            const rows = next.querySelectorAll('tbody tr');
+            rows.forEach(r => {
+              const cells = r.querySelectorAll('td');
+              if (cells.length >= 2) {
+                data.recommendations.push({
+                  rank: parseInt(cells[0]?.textContent?.trim()) || data.recommendations.length + 1,
+                  recommendation: cells[1]?.textContent?.trim() || '',
+                  rationale: cells[2]?.textContent?.trim() || '',
+                  effort: cells[3]?.textContent?.trim() || '',
+                });
+              }
+            });
+          }
+          next = next.nextElementSibling;
+        }
+      }
+    });
+
+    return data;
+  }
+
+  // ── Diff two structured report data objects ───────────────────
+  function diffReports(oldData, newData) {
+    const diff = {
+      segments: { old: oldData.segments.length, new: newData.segments.length, delta: 0 },
+      keywords: { old: oldData.keywords.length, new: newData.keywords.length, delta: 0 },
+      gaps: { old: oldData.gaps.length, new: newData.gaps.length, delta: 0 },
+      recommendations: { old: oldData.recommendations.length, new: newData.recommendations.length, delta: 0 },
+      gapsAdded: [],
+      gapsRemoved: [],
+      gapsChanged: [],
+      recsAdded: [],
+      recsRemoved: [],
+      keywordsAdded: [],
+      keywordsRemoved: [],
+    };
+
+    // Compute deltas
+    diff.segments.delta = diff.segments.new - diff.segments.old;
+    diff.keywords.delta = diff.keywords.new - diff.keywords.old;
+    diff.gaps.delta = diff.gaps.new - diff.gaps.old;
+    diff.recommendations.delta = diff.recommendations.new - diff.recommendations.old;
+
+    // Gaps — compare by gap description (fuzzy match)
+    const oldGapKeys = new Set(oldData.gaps.map(g => g.gap.toLowerCase().trim()));
+    const newGapKeys = new Set(newData.gaps.map(g => g.gap.toLowerCase().trim()));
+
+    // New gaps (in new but not in old)
+    newData.gaps.forEach(g => {
+      if (!oldGapKeys.has(g.gap.toLowerCase().trim())) {
+        diff.gapsAdded.push(g);
+      }
+    });
+
+    // Removed gaps (in old but not in new)
+    oldData.gaps.forEach(g => {
+      if (!newGapKeys.has(g.gap.toLowerCase().trim())) {
+        diff.gapsRemoved.push(g);
+      }
+    });
+
+    // Changed severity gaps (in both but with different severity)
+    newData.gaps.forEach(g => {
+      const old = oldData.gaps.find(o => o.gap.toLowerCase().trim() === g.gap.toLowerCase().trim());
+      if (old && old.severity.toLowerCase() !== g.severity.toLowerCase()) {
+        diff.gapsChanged.push({ gap: g.gap, oldSev: old.severity, newSev: g.severity });
+      }
+    });
+
+    // Recommendations — compare by text
+    const oldRecTexts = new Set(oldData.recommendations.map(r => r.recommendation.toLowerCase().trim()));
+    const newRecTexts = new Set(newData.recommendations.map(r => r.recommendation.toLowerCase().trim()));
+
+    newData.recommendations.forEach(r => {
+      if (!oldRecTexts.has(r.recommendation.toLowerCase().trim())) {
+        diff.recsAdded.push(r);
+      }
+    });
+    oldData.recommendations.forEach(r => {
+      if (!newRecTexts.has(r.recommendation.toLowerCase().trim())) {
+        diff.recsRemoved.push(r);
+      }
+    });
+
+    // Keywords — compare by keyword text
+    const oldKw = new Set(oldData.keywords.map(k => k.keyword.toLowerCase().trim()));
+    const newKw = new Set(newData.keywords.map(k => k.keyword.toLowerCase().trim()));
+
+    newData.keywords.forEach(k => {
+      if (!oldKw.has(k.keyword.toLowerCase().trim())) {
+        diff.keywordsAdded.push(k);
+      }
+    });
+    oldData.keywords.forEach(k => {
+      if (!newKw.has(k.keyword.toLowerCase().trim())) {
+        diff.keywordsRemoved.push(k);
+      }
+    });
+
+    return diff;
+  }
+
+  // ── Render the comparison view ────────────────────────────────
+  function renderComparisonView(filenameA, filenameB) {
+    const container = document.getElementById('comparisonContent');
+    if (!container) return;
+
+    const dataA = reportDataCache[filenameA];
+    const dataB = reportDataCache[filenameB];
+
+    if (!dataA || !dataB) {
+      container.innerHTML = '<div class="no-compare-note">Loading reports…</div>';
+      return;
+    }
+
+    const dA = extractReportData(dataA.rawMd, dataA.renderedHtml);
+    const dB = extractReportData(dataB.rawMd, dataB.renderedHtml);
+    const diff = diffReports(dA, dB);
+
+    const reportA = allReports.find(r => r.filename === filenameA);
+    const reportB = allReports.find(r => r.filename === filenameB);
+
+    const dateA = reportA ? new Date(reportA.modified).toLocaleDateString('en-US', {
+      month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
+    }) : 'older';
+    const dateB = reportB ? new Date(reportB.modified).toLocaleDateString('en-US', {
+      month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
+    }) : 'newer';
+
+    const deltaStr = (val) => {
+      if (val > 0) return `<span class="cm-delta up">↑ +${val}</span>`;
+      if (val < 0) return `<span class="cm-delta down">↓ ${val}</span>`;
+      return `<span class="cm-delta same">→ 0</span>`;
+    };
+
+    const arrow = (val) => {
+      if (val > 0) return '↑';
+      if (val < 0) return '↓';
+      return '→';
+    };
+
+    // Build the HTML
+    let html = `
+      <div class="comp-meta">
+        <span class="comp-date"><strong>${dateA}</strong> (older)</span>
+        <span style="color:#334155">vs</span>
+        <span class="comp-date"><strong>${dateB}</strong> (newer)</span>
+      </div>
+
+      <h3>📈 Metric Changes</h3>
+      <div class="comp-metrics">
+        <div class="comp-metric">
+          <div class="cm-label">Segments</div>
+          <div class="cm-values">
+            <span class="cm-old">${diff.segments.old}</span>
+            <span class="cm-arrow">${arrow(diff.segments.delta)}</span>
+            <span class="cm-new">${diff.segments.new}</span>
+            ${deltaStr(diff.segments.delta)}
+          </div>
+        </div>
+        <div class="comp-metric">
+          <div class="cm-label">Keywords</div>
+          <div class="cm-values">
+            <span class="cm-old">${diff.keywords.old}</span>
+            <span class="cm-arrow">${arrow(diff.keywords.delta)}</span>
+            <span class="cm-new">${diff.keywords.new}</span>
+            ${deltaStr(diff.keywords.delta)}
+          </div>
+        </div>
+        <div class="comp-metric">
+          <div class="cm-label">Content Gaps</div>
+          <div class="cm-values">
+            <span class="cm-old">${diff.gaps.old}</span>
+            <span class="cm-arrow">${arrow(diff.gaps.delta)}</span>
+            <span class="cm-new">${diff.gaps.new}</span>
+            ${deltaStr(diff.gaps.delta)}
+          </div>
+        </div>
+        <div class="comp-metric">
+          <div class="cm-label">Recommendations</div>
+          <div class="cm-values">
+            <span class="cm-old">${diff.recommendations.old}</span>
+            <span class="cm-arrow">${arrow(diff.recommendations.delta)}</span>
+            <span class="cm-new">${diff.recommendations.new}</span>
+            ${deltaStr(diff.recommendations.delta)}
+          </div>
+        </div>
+      </div>`;
+
+    // Content Gap Changes
+    html += `<h3>🕳️ Content Gap Changes</h3>`;
+    if (!diff.gapsAdded.length && !diff.gapsRemoved.length && !diff.gapsChanged.length) {
+      html += '<div class="diff-empty">No changes in content gaps.</div>';
+    } else {
+      if (diff.gapsAdded.length) {
+        html += `<div class="diff-section">`;
+        diff.gapsAdded.forEach(g => {
+          html += `<div class="diff-item added">
+            <span class="diff-marker">+</span>
+            <span class="diff-text">
+              <strong>${escHtml(g.gap)}</strong>
+              <span class="badge-sev ${g.severity}" style="margin-left:0.3rem">${g.severity}</span>
+              <span class="diff-detail">${escHtml(g.site)}</span>
+            </span>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+
+      if (diff.gapsRemoved.length) {
+        html += `<div class="diff-section">`;
+        diff.gapsRemoved.forEach(g => {
+          html += `<div class="diff-item removed">
+            <span class="diff-marker">−</span>
+            <span class="diff-text">
+              <strong>${escHtml(g.gap)}</strong>
+              <span class="badge-sev ${g.severity}">${g.severity}</span>
+              <span class="diff-detail">No longer present in newer report</span>
+            </span>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+
+      if (diff.gapsChanged.length) {
+        html += `<div class="diff-section">`;
+        diff.gapsChanged.forEach(g => {
+          html += `<div class="diff-item changed">
+            <span class="diff-marker">~</span>
+            <span class="diff-text">
+              <strong>${escHtml(g.gap)}</strong>
+              <span class="diff-detail">
+                Severity changed:
+                <span class="badge-sev ${g.oldSev}">${g.oldSev}</span>
+                → <span class="badge-sev ${g.newSev}">${g.newSev}</span>
+              </span>
+            </span>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+    }
+
+    // Recommendation Changes
+    html += `<h3>📋 Recommendation Changes</h3>`;
+    if (!diff.recsAdded.length && !diff.recsRemoved.length) {
+      html += '<div class="diff-empty">No changes in recommendations.</div>';
+    } else {
+      if (diff.recsAdded.length) {
+        diff.recsAdded.forEach(r => {
+          html += `<div class="diff-item added">
+            <span class="diff-marker">+</span>
+            <span class="diff-text">
+              <strong>#${r.rank}: ${escHtml(r.recommendation)}</strong>
+              <span class="diff-detail">Effort: ${r.effort}</span>
+            </span>
+          </div>`;
+        });
+      }
+      if (diff.recsRemoved.length) {
+        diff.recsRemoved.forEach(r => {
+          html += `<div class="diff-item removed">
+            <span class="diff-marker">−</span>
+            <span class="diff-text">
+              <strong>#${r.rank}: ${escHtml(r.recommendation)}</strong>
+              <span class="diff-detail">No longer recommended</span>
+            </span>
+          </div>`;
+        });
+      }
+    }
+
+    // Keyword Changes
+    html += `<h3>🔑 Keyword Changes</h3>`;
+    if (!diff.keywordsAdded.length && !diff.keywordsRemoved.length) {
+      html += '<div class="diff-empty">No changes in keyword opportunities.</div>';
+    } else {
+      if (diff.keywordsAdded.length) {
+        diff.keywordsAdded.forEach(k => {
+          html += `<div class="diff-item added">
+            <span class="diff-marker">+</span>
+            <span class="diff-text"><strong>${escHtml(k.keyword)}</strong> <span class="diff-detail">vol: ${k.volume}</span></span>
+          </div>`;
+        });
+      }
+      if (diff.keywordsRemoved.length) {
+        diff.keywordsRemoved.forEach(k => {
+          html += `<div class="diff-item removed">
+            <span class="diff-marker">−</span>
+            <span class="diff-text"><strong>${escHtml(k.keyword)}</strong> <span class="diff-detail">vol: ${k.volume}</span></span>
+          </div>`;
+        });
+      }
+    }
+
+    container.innerHTML = html;
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ── Handle compare button click ──────────────────────────────
+  async function handleCompare() {
+    const selected = getSelectedReports();
+    if (selected.length !== 2) return;
+
+    // Sort so the older report is first
+    const ra = allReports.find(r => r.filename === selected[0]);
+    const rb = allReports.find(r => r.filename === selected[1]);
+    if (!ra || !rb) return;
+
+    const [older, newer] = ra.modified < rb.modified
+      ? [selected[0], selected[1]]
+      : [selected[1], selected[0]];
+
+    // Ensure both are cached
+    for (const f of [older, newer]) {
+      if (!reportDataCache[f]) {
+        try {
+          const resp = await fetch(`/api/report/${f}`);
+          const text = await resp.text();
+          reportDataCache[f] = { rawMd: text, renderedHtml: renderMarkdown(text) };
+        } catch (e) {
+          log('error', `Failed to load ${f}: ${e.message}`);
+          return;
+        }
+      }
+    }
+
+    renderComparisonView(older, newer);
+
+    // Show the overlay
+    const overlay = document.getElementById('compareOverlay');
+    if (overlay) overlay.classList.add('open');
+  }
+
+  // ── History header collapse/expand ────────────────────────────
+  const historyHeader = document.getElementById('historyHeader');
+  const historyBody = document.getElementById('historyBody');
+  const historyArrow = document.getElementById('historyCollapseArrow');
+  let historyExpanded = true;
+
+  if (historyHeader) {
+    historyHeader.addEventListener('click', (e) => {
+      if (e.target.closest('.compare-btn')) return;
+      historyExpanded = !historyExpanded;
+      historyBody.classList.toggle('collapsed', !historyExpanded);
+      historyArrow.classList.toggle('collapsed', !historyExpanded);
+    });
+  }
+
+  // ── Compare overlay close ─────────────────────────────────────
+  document.getElementById('compareClose').addEventListener('click', () => {
+    document.getElementById('compareOverlay').classList.remove('open');
+  });
+  document.getElementById('compareOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      document.getElementById('compareOverlay').classList.remove('open');
+    }
+  });
+
+  // ── Compare button ────────────────────────────────────────────
+  document.getElementById('compareBtn').addEventListener('click', handleCompare);
+
+  // ── Init: fetch report history when SSE connects ─────────────
+  // Also override onSSEReady's auto-run to delay slightly for history fetch
+  const origAfterCards = setTimeout; // just a reference
+  // Schedule history fetch after the initial pipeline animation
+  setTimeout(fetchReportHistory, 4000);
 
   // Connect to SSE on load
   connectSSE();

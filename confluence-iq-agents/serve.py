@@ -7,9 +7,11 @@ Usage:
 
 import json
 import pathlib
+import re
 import sys
 import threading
 import time
+from datetime import datetime, timezone as tz
 from contextlib import asynccontextmanager
 
 # ── Ensure ``src`` is on the path for direct ``python serve.py`` ──
@@ -50,6 +52,44 @@ async def _dashboard() -> HTMLResponse:
     if not html_path.exists():
         return HTMLResponse("dashboard.html not found", status_code=500)
     return HTMLResponse(html_path.read_text(encoding="utf-8"))
+
+
+# ── Report listing endpoint (for history/trends) ─────────────────
+_REPORT_METRICS_RE = re.compile(
+    r"covering\s+(\d+)\s+customer segment"
+    r"|(\d+)\s+keyword opportunit"
+    r"|(\d+)\s+content gap"
+    r"|(\d+)\s+prioritized recommendation"
+)
+
+
+def _extract_metrics(text: str) -> dict:
+    """Extract summary metrics from a report's executive summary."""
+    metrics = {}
+    for match in _REPORT_METRICS_RE.finditer(text):
+        for i, g in enumerate(match.groups(), 1):
+            if g is not None:
+                keys = ["segments", "keywords", "gaps", "recommendations"]
+                metrics[keys[i - 1]] = int(g)
+    return metrics
+
+
+@app.get("/api/reports", response_model=None)
+async def _list_reports():
+    """List all reports with metadata, newest first."""
+    reports = []
+    pattern = "report_*.md"
+    for f in sorted(OUTPUT_DIR.glob(pattern), key=lambda p: p.stat().st_mtime, reverse=True):
+        mtime = datetime.fromtimestamp(f.stat().st_mtime, tz=tz.utc)
+        content = f.read_text(encoding="utf-8")
+        metrics = _extract_metrics(content)
+        reports.append({
+            "filename": f.name,
+            "size": f.stat().st_size,
+            "modified": mtime.isoformat(),
+            "metrics": metrics,
+        })
+    return reports
 
 
 # ── SSE event stream ─────────────────────────────────────────────
@@ -107,4 +147,4 @@ async def _get_report(filename: str):
 
 # ── Entrypoint ───────────────────────────────────────────────────
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("serve:app", host="0.0.0.0", port=8000, reload=True)
