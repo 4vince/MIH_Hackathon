@@ -82,8 +82,13 @@ def call_llm(
                 {
                     "role": "user",
                     "content": (
-                        "That response did not match the required schema. "
+                        "That response did not match the required schema.\n"
                         f"Validation error: {exc}\n\n"
+                        "Common issues:\n"
+                        "- Use EXACTLY the field names listed in the schema — e.g. use \"name\" not \"segment\"\n"
+                        "- All top-level fields are REQUIRED — include every one\n"
+                        "- Lists of strings must be plain strings, NOT objects/dicts\n"
+                        "- Arrays must be JSON arrays, objects must be JSON objects\n\n"
                         "Respond again with ONLY valid JSON matching this exact schema:\n"
                         f"{output_schema.model_json_schema()}"
                     ),

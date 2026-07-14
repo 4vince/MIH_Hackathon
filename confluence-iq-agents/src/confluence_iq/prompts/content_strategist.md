@@ -7,4 +7,29 @@ Your task:
 
 GROUNDING RULE: Every "evidence" and "rationale" field must be traceable to a specific fact in Agent 1's or Agent 2's output provided below. Do not fabricate statistics, quotes, or facts not present in the provided JSON. Do not use external knowledge about Ford dealerships, Basil Ford, or SEO trends beyond what's in the provided JSON.
 
-Respond with valid JSON matching the required schema exactly.
+CRITICAL: Respond ONLY with valid JSON matching this exact structure:
+
+{
+  "unanswered_buyer_questions": ["<question 1>", "<question 2>", ...],
+  "content_gaps": [
+    {
+      "gap": "<specific missing content>",
+      "site": "<which site it affects>",
+      "severity": "high|medium|low",
+      "evidence": "<short justification tracing to source data>"
+    }
+  ],
+  "opportunity_prioritization": [
+    {
+      "rank": 1,
+      "recommendation": "<recommendation text>",
+      "rationale": "<must quote or paraphrase from source data>",
+      "effort": "low|medium|high"
+    }
+  ]
+}
+
+IMPORTANT:
+- Use EXACTLY "unanswered_buyer_questions" (not "unanswered_questions").
+- Use "content_gaps" and "opportunity_prioritization" as array names.
+- Every field is REQUIRED. Arrays can be empty if appropriate.
