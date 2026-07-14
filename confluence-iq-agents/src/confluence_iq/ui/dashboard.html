@@ -384,6 +384,132 @@
     align-items: center; justify-content: center;
   }
   .report-close:hover { background: #475569; }
+
+  /* ── Summary Panel (post-run metrics) ──────────────────── */
+  .summary-panel {
+    display: none;
+    margin: 0 2rem 1rem;
+    background: linear-gradient(135deg, #1e293b 0%, #1a2332 100%);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    flex-shrink: 0;
+  }
+  .summary-panel.visible { display: block; }
+  .summary-panel h3 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 0.75rem;
+  }
+  .summary-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .metric-tile {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    min-width: 120px;
+    flex: 1 0 auto;
+    transition: border-color 0.2s;
+  }
+  .metric-tile:hover { border-color: #334155; }
+  .metric-tile .metric-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    line-height: 1.2;
+  }
+  .metric-tile .metric-label {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-top: 0.15rem;
+  }
+  .metric-tile .metric-value.good { color: #4ade80; }
+  .metric-tile .metric-value.warn { color: #fbbf24; }
+  .metric-tile .metric-value.info { color: #22d3ee; }
+
+  /* ── Rendered Report Styles ────────────────────────────── */
+  .report-body h1 { font-size: 1.4rem; font-weight: 700; margin: 1.5em 0 0.5em; color: #f1f5f9; }
+  .report-body h2 { font-size: 1.15rem; font-weight: 600; margin: 1.3em 0 0.4em; color: #e2e8f0; border-bottom: 1px solid #1e293b; padding-bottom: 0.3em; }
+  .report-body h3 { font-size: 1rem; font-weight: 600; margin: 1em 0 0.3em; color: #cbd5e1; }
+  .report-body h4 { font-size: 0.9rem; font-weight: 600; margin: 0.8em 0 0.2em; color: #94a3b8; }
+  .report-body p { margin: 0.4em 0; line-height: 1.65; color: #cbd5e1; }
+  .report-body strong { color: #e2e8f0; }
+  .report-body ul, .report-body ol { margin: 0.4em 0; padding-left: 1.5em; }
+  .report-body li { margin: 0.2em 0; line-height: 1.6; color: #cbd5e1; }
+  .report-body code {
+    background: #0f172a; padding: 0.1em 0.4em; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #f472b6;
+  }
+  .report-body pre {
+    background: #0f172a; padding: 0.8rem 1rem; border-radius: 8px;
+    overflow-x: auto; margin: 0.6em 0; border: 1px solid #1e293b;
+  }
+  .report-body pre code { background: none; padding: 0; color: #e2e8f0; }
+  .report-body blockquote {
+    border-left: 3px solid #334155; margin: 0.6em 0; padding: 0.3em 1em;
+    color: #94a3b8; background: rgba(30,41,59,0.3); border-radius: 0 8px 8px 0;
+  }
+
+  /* ── Report Tables ─────────────────────────────────────── */
+  .report-body table {
+    width: 100%; border-collapse: collapse; margin: 0.8em 0;
+    font-size: 0.8rem;
+  }
+  .report-body th {
+    background: #0f172a; color: #94a3b8; font-weight: 600;
+    padding: 0.5rem 0.6rem; text-align: left; border-bottom: 2px solid #334155;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .report-body td {
+    padding: 0.4rem 0.6rem; border-bottom: 1px solid #1e293b; color: #cbd5e1;
+    vertical-align: top;
+  }
+  .report-body tr:hover td { background: rgba(30,41,59,0.4); }
+  .report-body tr:last-child td { border-bottom: none; }
+
+  /* ── Severity & Effort Badges ──────────────────────────── */
+  .badge-sev {
+    display: inline-block; padding: 0.1rem 0.5rem; border-radius: 4px;
+    font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-sev.high { background: #7f1d1d; color: #fca5a5; }
+  .badge-sev.medium { background: #713f12; color: #fde68a; }
+  .badge-sev.low { background: #14532d; color: #86efac; }
+  .badge-sev.critical { background: #7f1d1d; color: #fca5a5; }
+
+  /* ── Report header (title + download) ──────────────────── */
+  .report-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.5rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid #334155;
+  }
+  .report-header h2 { margin: 0; font-size: 1rem; color: #e2e8f0; border: none; }
+  .download-btn {
+    background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+    padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer;
+    font-size: 0.75rem; transition: all 0.2s;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;
+  }
+  .download-btn:hover { color: #e2e8f0; border-color: #475569; background: #334155; }
+
+  /* ── Summary rank badges in opportunity table ──────────── */
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: 0.7rem; font-weight: 700; color: #fff;
+  }
+  .rank-badge.r1 { background: #fbbf24; color: #0f172a; }
+  .rank-badge.r2 { background: #94a3b8; color: #0f172a; }
+  .rank-badge.r3 { background: #78350f; }
+  .rank-badge.r4 { background: #334155; }
 </style>
 </head>
 <body>
@@ -491,6 +617,33 @@
     </div>
   </div>
 
+  <!-- ═══ Summary Panel ══════════════════════════════════════ -->
+  <div class="summary-panel" id="summaryPanel">
+    <h3>Pipeline Results</h3>
+    <div class="summary-metrics" id="summaryMetrics">
+      <div class="metric-tile">
+        <div class="metric-value info" id="m-segments">—</div>
+        <div class="metric-label">Customer Segments</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value info" id="m-keywords">—</div>
+        <div class="metric-label">Keyword Opportunities</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value warn" id="m-gaps">—</div>
+        <div class="metric-label">Content Gaps</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value good" id="m-recommendations">—</div>
+        <div class="metric-label">Recommendations</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-value" id="m-segments-named">—</div>
+        <div class="metric-label">Segments Analyzed</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ Event Log ══════════════════════════════════════════ -->
   <div class="event-log-container">
     <div class="event-log-header" id="logHeader">
@@ -510,7 +663,11 @@
   <div class="report-overlay" id="reportOverlay">
     <div class="report-panel" id="reportPanel">
       <button class="report-close" id="reportClose">✕</button>
-      <div id="reportContent"></div>
+      <div class="report-header">
+        <h2>📄 Pipeline Report</h2>
+        <a class="download-btn" id="downloadBtn" download="report.md">⬇ Download .md</a>
+      </div>
+      <div class="report-body" id="reportContent"></div>
     </div>
   </div>
 
@@ -677,6 +834,212 @@
         easing: 'easeOutQuad',
       });
     }
+  }
+
+  // ── Markdown Renderer ───────────────────────────────────────────
+  function renderMarkdown(md) {
+    // Escape HTML entities first, then parse markdown
+    let html = md
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // Code blocks (fenced) — must be before other inline parsing
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+      const langClass = lang ? ` class="language-${lang}"` : '';
+      return `<pre><code${langClass}>${code.trim()}</code></pre>`;
+    });
+
+    // Horizontal rules
+    html = html.replace(/^---$/gm, '<hr>');
+
+    // Headings (must be before bold/italic parsing inside them)
+    html = html.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
+    html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+    // Tables — must be parsed before other inline transforms on table content
+    html = html.replace(/((?:^|\n)\|.*\|(?:\n\|[-:| ]+\|)?(?:\n\|.*\|)*)/g, (tableBlock) => {
+      return parseTable(tableBlock.trim());
+    });
+
+    // Blockquotes
+    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+    // Collapse adjacent blockquotes
+    html = html.replace(/<\/blockquote>\n<blockquote>/g, '\n');
+
+    // Bold + italic
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#22d3ee">$1</a>');
+
+    // Unordered lists — consecutive lines starting with "- "
+    html = html.replace(/^- (.+)(?:\n- .+)*/gm, (match) => {
+      const items = match.split('\n').map(l => '<li>' + l.replace(/^- /, '').trim() + '</li>').join('\n');
+      return '<ul>\n' + items + '\n</ul>';
+    });
+
+    // Ordered lists — consecutive lines starting with "N. "
+    html = html.replace(/^\d+\. (.+)(?:\n\d+\. .+)*/gm, (match) => {
+      const items = match.split('\n').map(l => '<li>' + l.replace(/^\d+\. /, '').trim() + '</li>').join('\n');
+      return '<ol>\n' + items + '\n</ol>';
+    });
+
+    // Paragraphs — wrap remaining text blocks that aren't already in block elements
+    const blockElements = /^<(h[1-6]|ul|ol|li|table|thead|tbody|tr|th|td|pre|blockquote|hr|div)/;
+    const lines = html.split('\n');
+    let inBlock = false;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) { inBlock = false; continue; }
+      if (blockElements.test(line) || line.startsWith('</')) { inBlock = false; continue; }
+      if (line.startsWith('<') && !line.startsWith('<p')) continue; // already a tag
+      if (!inBlock && !line.startsWith('<')) {
+        lines[i] = '<p>' + line + '</p>';
+      }
+    }
+    html = lines.join('\n');
+
+    return html;
+  }
+
+  function parseTable(block) {
+    const lines = block.split('\n').filter(l => l.trim());
+    if (lines.length < 2) return block;
+
+    // Detect if there's a separator row (|---|---|)
+    const hasSep = lines.some(l => /^\|[-:| ]+\|$/.test(l.trim()));
+    const dataRows = hasSep ? lines.filter((l, i) => i !== 1) : lines;
+
+    let thead = '', tbody = '';
+    dataRows.forEach((row, idx) => {
+      const cols = row.split('|').filter(c => c.trim() !== '').map(c => c.trim());
+      if (idx === 0 && hasSep) {
+        // Header row
+        thead = '<thead><tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr></thead>';
+      } else {
+        const tds = cols.map(c => {
+          // Convert severity/effort keywords to badges
+          const sevMatch = c.match(/^(high|medium|low|critical)$/i);
+          if (sevMatch) {
+            return '<td><span class="badge-sev ' + sevMatch[1].toLowerCase() + '">' + sevMatch[1].toLowerCase() + '</span></td>';
+          }
+          // Convert rank numbers (1., 2., 3., 4.) to rank badges
+          const rankMatch = c.match(/^(\d+)$/);
+          if (rankMatch && cols.length <= 3) {
+            const n = parseInt(rankMatch[1]);
+            if (n >= 1 && n <= 4) {
+              return '<td><span class="rank-badge r' + n + '">' + n + '</span></td>';
+            }
+          }
+          return '<td>' + c + '</td>';
+        });
+        tbody += '<tr>' + tds.join('') + '</tr>';
+      }
+    });
+
+    if (!tbody) return block; // no data rows
+    return '<table>' + thead + '<tbody>' + tbody + '</tbody></table>';
+  }
+
+  // ── Summary Metrics Extraction ──────────────────────────────────
+  function updateSummaryFromReport(renderedHtml, rawMd) {
+    // Parse key metrics from the rendered content
+    const temp = document.createElement('div');
+    temp.innerHTML = renderedHtml;
+
+    // Count customer segments (h3 headings under Customer Insights)
+    const segments = [];
+    let inCustomerSection = false;
+    temp.querySelectorAll('h2, h3').forEach(h => {
+      if (h.tagName === 'H2' && h.textContent.includes('Customer Insights')) {
+        inCustomerSection = true;
+        return;
+      }
+      if (h.tagName === 'H2' && !h.textContent.includes('Customer Insights')) {
+        inCustomerSection = false;
+      }
+      if (inCustomerSection && h.tagName === 'H3') {
+        segments.push(h.textContent.trim());
+      }
+    });
+
+    // Count keyword opportunities from the Competitor Landscape table
+    const allText = temp.textContent || '';
+    const keywordMatch = rawMd.match(/covering (\d+) customer segment/);
+    const gapMatch = rawMd.match(/(\d+) content gap/);
+    const recMatch = rawMd.match(/(\d+) prioritized recommendation/);
+    const keywordCount = rawMd.match(/(\d+) keyword opportunit/);
+
+    // Count gaps table rows (non-header)
+    const gapRows = [];
+    temp.querySelectorAll('h2').forEach(h => {
+      if (h.textContent.includes('Content Gap')) {
+        let next = h.nextElementSibling;
+        while (next && next.tagName !== 'H2') {
+          if (next.tagName === 'TABLE') {
+            const rows = next.querySelectorAll('tbody tr');
+            rows.forEach(r => {
+              const cells = r.querySelectorAll('td');
+              if (cells.length >= 3) {
+                gapRows.push({
+                  gap: cells[0]?.textContent?.trim() || '',
+                  site: cells[1]?.textContent?.trim() || '',
+                  severity: cells[2]?.textContent?.trim() || '',
+                });
+              }
+            });
+          }
+          next = next.nextElementSibling;
+        }
+      }
+    });
+
+    // Count recommendation rows
+    const recRows = [];
+    temp.querySelectorAll('h2').forEach(h => {
+      if (h.textContent.includes('Opportunity Priorit')) {
+        let next = h.nextElementSibling;
+        while (next && next.tagName !== 'H2') {
+          if (next.tagName === 'TABLE') {
+            const rows = next.querySelectorAll('tbody tr');
+            rows.forEach(r => {
+              const cells = r.querySelectorAll('td');
+              if (cells.length >= 2) {
+                recRows.push(cells[0]?.textContent?.trim() || '');
+              }
+            });
+          }
+          next = next.nextElementSibling;
+        }
+      }
+    });
+
+    // Segment names (shorter list for the tile)
+    const shortNames = segments.slice(0, 3);
+    const segLabel = shortNames.length
+      ? shortNames.join(', ') + (segments.length > 3 ? ` +${segments.length - 3} more` : '')
+      : '—';
+
+    // Update metric tiles
+    const setVal = (id, val, cls) => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = val; if (cls) el.className = 'metric-value ' + cls; }
+    };
+
+    setVal('m-segments', segments.length || keywordMatch?.[1] || '—', 'info');
+    setVal('m-keywords', keywordCount?.[1] || '—', 'info');
+    setVal('m-gaps', gapRows.length || gapMatch?.[1] || '—', gapRows.some(r => r.severity === 'high') ? 'warn' : 'good');
+    setVal('m-recommendations', recRows.length || recMatch?.[1] || '—', 'good');
+    setVal('m-segments-named', segLabel, '');
   }
 
   // ── SSE Handler ──────────────────────────────────────────────
@@ -889,14 +1252,20 @@
 
       case 'report_written': {
         log('done', `Report written: ${event.filename}`);
-        // Fetch and display the report content
+        // Fetch and display the report content — rendered as HTML
         fetch(`/api/report/${event.filename}`)
           .then(r => r.ok ? r.text() : '# Failed to load report')
           .then(md => {
-            document.getElementById('reportContent').innerHTML =
-              '<pre style="white-space:pre-wrap;font-size:0.8rem;line-height:1.6">'
-              + md.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-              + '</pre>';
+            const rendered = renderMarkdown(md);
+            document.getElementById('reportContent').innerHTML = rendered;
+            // Set up download button with raw markdown
+            const dl = document.getElementById('downloadBtn');
+            if (dl) {
+              dl.href = 'data:text/markdown;charset=utf-8,' + encodeURIComponent(md);
+              dl.download = event.filename || 'report.md';
+            }
+            // Extract metrics and update summary panel
+            updateSummaryFromReport(rendered, md);
           })
           .catch(() => {});
         break;
@@ -906,6 +1275,8 @@
         log('done', `Pipeline finished in ${event.elapsed_seconds || 0}s`);
         const btn = document.getElementById('runBtn');
         if (btn) btn.disabled = false;
+        // Show summary panel
+        document.getElementById('summaryPanel').classList.add('visible');
         // Auto-show the report overlay
         const overlay = document.getElementById('reportOverlay');
         if (overlay && !overlay.classList.contains('open')) {
@@ -961,6 +1332,13 @@
     // Hide badges
     $$('.data-badge').forEach(b => {
       anime({ targets: b, opacity: 0, duration: 200 });
+    });
+
+    // Hide summary panel and reset metrics
+    document.getElementById('summaryPanel').classList.remove('visible');
+    ['m-segments','m-keywords','m-gaps','m-recommendations','m-segments-named'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '—';
     });
 
     // Add a run separator and first entry
